@@ -52,38 +52,40 @@ Engine::Texture::Texture(UVector2D size, char defaultChar, RGBA frgba, RGBA brgb
 Engine::Texture::Texture(std::string fileName, Vector2D pos) : pos(pos)
 {
 	std::ifstream file(fileName);
+	if (!file.is_open())
+		return;
 	std::string line;
 
-	RGBA frgba, brgba;
-	char32_t character;
+	SuperChar schar;
 
 	for (size_t y = 0; std::getline(file, line); y++)
 	{
-		t.resize(t.size() + 1);
+		// potentially broken if one of the values = 10 ('\n')
+		t.push_back({});
 		for (size_t x = 0, j = 0; x < line.length(); x++, j++)
 		{
 			if (j == 9)
 				j = 0;
 			if (j == 0)
-				frgba.r = line[x];
+				schar.frgba.r = (unsigned char)line[x];
 			else if (j == 1)
-				frgba.g = line[x];
+				schar.frgba.g = (unsigned char)line[x];
 			else if (j == 2)
-				frgba.b = line[x];
+				schar.frgba.b = (unsigned char)line[x];
 			else if (j == 3)
-				frgba.a = line[x];
+				schar.frgba.a = (unsigned char)line[x] / 255.0f;
 			else if (j == 4)
-				brgba.r = line[x];
+				schar.brgba.r = (unsigned char)line[x];
 			else if (j == 5)
-				brgba.g = line[x];
+				schar.brgba.g = (unsigned char)line[x];
 			else if (j == 6)
-				brgba.b = line[x];
+				schar.brgba.b = (unsigned char)line[x];
 			else if (j == 7)
-				brgba.a = 255.0f / line[x];
+				schar.brgba.a = (unsigned char)line[x] / 255.0f;
 			else if (j == 8)
 			{
-				character = line[x];
-				t[y].push_back(SuperChar(character, frgba, brgba));
+				schar.character = line[x];
+				t[y].push_back(schar);
 			}
 		}
 	}

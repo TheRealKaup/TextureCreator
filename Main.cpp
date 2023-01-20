@@ -40,11 +40,11 @@ IntInputField* pif_brushSpeed; // 9
 IntInputField* pif_brushX; // 10
 IntInputField* pif_brushY; // 11
 Button* pb_resetBrushPos; // 12
+IntInputField* pif_background; // 13
 
 // Canvas
 Object* pcanvas;
 Object* pbrush;
-Object* pbrushVisual;
 
 
 RGBA canvasSelected(255, 255, 255, 1.0f);
@@ -55,7 +55,7 @@ int brushSpeed = 0;
 
 void SelectCanvas()
 {
-	for (size_t i = 1; i < pcanvas->textures.size(); i++)
+	for (size_t i = 1; i < 5; i++)
 	{
 		for (size_t y = 0; y < pcanvas->textures[i].t.size(); y++)
 		{
@@ -67,7 +67,7 @@ void SelectCanvas()
 
 void DeselectCanvas()
 {
-	for (size_t i = 1; i < pcanvas->textures.size(); i++)
+	for (size_t i = 1; i < 5; i++)
 	{
 		for (size_t y = 0; y < pcanvas->textures[i].t.size(); y++)
 		{
@@ -79,6 +79,40 @@ void DeselectCanvas()
 
 void Exit() { running = false; }
 
+void ChangeCanvasBackground()
+{
+	if (pif_background->number == 1)
+	{
+		for (size_t y = 0; y < pcanvas->textures[0].t.size(); y++)
+		{
+			for (size_t x = 0; x < pcanvas->textures[0].t[y].size(); x++)
+				pcanvas->textures[0].t[y][x].brgba = { 0, 0, 0, 0.0f };
+		}
+	}
+	else if (pif_background->number == 2)
+	{
+		for (size_t y = 0; y < pcanvas->textures[0].t.size(); y++)
+		{
+			for (size_t x = 0; x < pcanvas->textures[0].t[y].size(); x++)
+				pcanvas->textures[0].t[y][x].brgba = { 255, 0, 0, 1.0f };
+		}
+	}
+	else if (pif_background->number == 3)
+	{
+		bool offone = false;
+		for (size_t y = 0; y < pcanvas->textures[0].t.size(); y++, offone = !offone)
+		{
+			for (size_t x = 0; x < pcanvas->textures[0].t[y].size(); x++)
+			{
+				if (x % 2 == offone)
+					pcanvas->textures[0].t[y][x].brgba = { 205, 205, 205, 1.0f };
+				else
+					pcanvas->textures[0].t[y][x].brgba = { 255, 255, 255, 1.0f };
+			}
+		}
+	}
+}
+
 void ResizeCanvas()
 {
 	// Textures
@@ -86,11 +120,29 @@ void ResizeCanvas()
 	unsigned int sizeX = (unsigned int)pif_canvasX->number;
 	unsigned int sizeY = (unsigned int)pif_canvasY->number;
 
-	// Canvas itself
+	// Background
 	pcanvas->textures[0].pos = { 1, 1 };
 	pcanvas->textures[0].t.resize(sizeY);
-	for (size_t y = 0; y < sizeY; y++)
-		pcanvas->textures[0].t[y].resize(sizeX, SuperChar(' ', { 0, 0, 0, 0.0f }, { 0, 0, 0, 0.0f }));
+	if (pif_background->number == 1)
+	{
+		for (size_t y = 0; y < sizeY; y++)
+			pcanvas->textures[0].t[y].resize(sizeX, SuperChar(' ', { 0, 0, 0, 0.0f }, { 0, 0, 0, 0.0f }));
+	}
+	else if (pif_background->number == 2)
+	{
+		for (size_t y = 0; y < sizeY; y++)
+			pcanvas->textures[0].t[y].resize(sizeX, SuperChar(' ', { 0, 0, 0, 0.0f }, { 255, 0, 0, 1.0f }));
+	}
+	else if (pif_background->number == 3)
+	{
+		bool offone = false;
+		for (size_t y = 0; y < sizeY; y++, offone = !offone)
+		{
+			pcanvas->textures[0].t[y].resize(sizeX, SuperChar(' ', { 0, 0, 0, 0.0f }, { 255, 255, 255, 1.0f }));
+			for (size_t x = offone; x < sizeX; x+=2)
+				pcanvas->textures[0].t[y][x].brgba = { 205, 205, 205, 1.0f };
+		}
+	}
 
 	// Top frame
 	pcanvas->textures[1] = Texture({ sizeX, 1 }, '-', canvasUnselected, { 0, 0, 0, 0.0f }, { 1, 0 });
@@ -107,6 +159,12 @@ void ResizeCanvas()
 	pcanvas->textures[4] = Texture({ 1, sizeY + 2 }, '|', canvasUnselected, { 0, 0, 0, 0.0f }, { (int)(sizeX + 1), 0 });
 	pcanvas->textures[4].t[0][0].character = '\\';
 	pcanvas->textures[4].t[sizeY + 1][0].character = '/';
+
+	// Canvas itself
+	pcanvas->textures[5].pos = { 1, 1 };
+	pcanvas->textures[5].t.resize(sizeY);
+	for (size_t y = 0; y < sizeY; y++)
+		pcanvas->textures[5].t[y].resize(sizeX, SuperChar(' ', { 0, 0, 0, 0.0f }, { 0, 0, 0, 0.0f }));
 
 
 	// Colliders
@@ -182,21 +240,19 @@ void DrawToCanvas()
 	if (sectionState != 0)
 		return;
 
-	for (size_t y = 0; y < pbrushVisual->textures[0].t.size(); y++)
+	for (size_t y = 0; y < pbrush->textures[0].t.size(); y++)
 	{
-		for (size_t x = 0; x < pbrushVisual->textures[0].t[y].size(); x++)
+		for (size_t x = 0; x < pbrush->textures[0].t[y].size(); x++)
 		{
-			int fy = y - pcanvas->pos.y - pcanvas->textures[0].pos.y + pbrush->pos.y;
-			int fx = x - pcanvas->pos.x - pcanvas->textures[0].pos.x + pbrush->pos.x;
+			int fy = y - pcanvas->pos.y - pcanvas->textures[5].pos.y + pbrush->pos.y;
+			int fx = x - pcanvas->pos.x - pcanvas->textures[5].pos.x + pbrush->pos.x;
 
-			if (fy < 0 || fy >= pcanvas->textures[0].t.size())
+			if (fy < 0 || fy >= pcanvas->textures[5].t.size())
 				break;
-			if (fx < 0 || fx >= pcanvas->textures[0].t[0].size())
+			if (fx < 0 || fx >= pcanvas->textures[5].t[0].size())
 				continue;
 
-
-
-			pcanvas->textures[0].t[fy][fx] = pbrushVisual->textures[0].t[y][x];
+			pcanvas->textures[5].t[fy][fx] = pbrush->textures[0].t[y][x];
 		}
 	}
 }
@@ -204,7 +260,7 @@ void DrawToCanvas()
 void UpdateBrush()
 {
 	// Texture
-	pbrushVisual->textures[0] = Texture(
+	pbrush->textures[0] = Texture(
 		{ (unsigned int)pif_brushX->number, (unsigned int)pif_brushY->number },
 		psf_char->string.size() == 0 ? ' ' : psf_char->string[0],
 		{ (unsigned char)(pif_fr->number), (unsigned char)(pif_fg->number), (unsigned char)(pif_fb->number), pif_fa->number / 255.0f },
@@ -245,12 +301,12 @@ void Import()
 
 	int maxX = 0;
 
-	pcanvas->textures[0].t = {};
+	pcanvas->textures[5].t = {};
 
 	size_t y = 0;
 	for (; std::getline(file, line); y++)
 	{
-		pcanvas->textures[0].t.push_back({});
+		pcanvas->textures[5].t.push_back({});
 
 		// potentially broken if one of the values = 10 ('\n')
 
@@ -277,16 +333,16 @@ void Import()
 			else if (j == 8)
 			{
 				schar.character = line[x];
-				pcanvas->textures[0].t[y].push_back(schar);
+				pcanvas->textures[5].t[y].push_back(schar);
 			}
 		}
 
-		if (maxX < pcanvas->textures[0].t[y].size())
-			maxX = pcanvas->textures[0].t[y].size();
+		if (maxX < pcanvas->textures[5].t[y].size())
+			maxX = pcanvas->textures[5].t[y].size();
 	}
 
-	for (size_t y = 0; y < pcanvas->textures[0].t.size(); y++)
-		pcanvas->textures[0].t[y].resize(maxX, SuperChar(' ', { 0, 0, 0, 0.0f }, { 0, 0, 0, 0.0f }));
+	for (size_t y = 0; y < pcanvas->textures[5].t.size(); y++)
+		pcanvas->textures[5].t[y].resize(maxX, SuperChar(' ', { 0, 0, 0, 0.0f }, { 0, 0, 0, 0.0f }));
 
 	pif_canvasX->ChangeValue(std::to_string(maxX));
 	pif_canvasY->ChangeValue(std::to_string(y));
@@ -298,31 +354,27 @@ void Export()
 {
 	std::ofstream outFile("export.kcget");
 
-	// guhhh create ahhh thing
-
 	// create (if doesn't exist) file named "textureExport.kcget" and its content is
 	// the current texture of canvas.textures[0].t
 
 	std::string out = "";
 
-	for (size_t y = 0; y < pcanvas->textures[0].t.size(); y++)
+	for (size_t y = 0; y < pcanvas->textures[5].t.size(); y++)
 	{
-		for (size_t x = 0; x < pcanvas->textures[0].t[y].size(); x++)
+		for (size_t x = 0; x < pcanvas->textures[5].t[y].size(); x++)
 		{
-			out += pcanvas->textures[0].t[y][x].frgba.r;
-			out += pcanvas->textures[0].t[y][x].frgba.g;
-			out += pcanvas->textures[0].t[y][x].frgba.b;
-			out += (char)(pcanvas->textures[0].t[y][x].frgba.a * 255);
-			out += pcanvas->textures[0].t[y][x].brgba.r;
-			out += pcanvas->textures[0].t[y][x].brgba.g;
-			out += pcanvas->textures[0].t[y][x].brgba.b;
-			out += (char)(pcanvas->textures[0].t[y][x].brgba.a * 255);
-			out += pcanvas->textures[0].t[y][x].character;
+			out += pcanvas->textures[5].t[y][x].frgba.r;
+			out += pcanvas->textures[5].t[y][x].frgba.g;
+			out += pcanvas->textures[5].t[y][x].frgba.b;
+			out += (char)(pcanvas->textures[5].t[y][x].frgba.a * 255);
+			out += pcanvas->textures[5].t[y][x].brgba.r;
+			out += pcanvas->textures[5].t[y][x].brgba.g;
+			out += pcanvas->textures[5].t[y][x].brgba.b;
+			out += (char)(pcanvas->textures[5].t[y][x].brgba.a * 255);
+			out += pcanvas->textures[5].t[y][x].character;
 		}
-		if (y < pcanvas->textures[0].t.size() - 1)
+		if (y < pcanvas->textures[5].t.size() - 1)
 			out += '\n';
-
-		// Add new line
 	}
 
 	outFile.write(out.c_str(), out.length());
@@ -362,6 +414,7 @@ void StateMachine(unsigned char dir) // 0 = up, 1 = left, 2 = down, 3 = right
 	pif_brushX; // 10
 	pif_brushY; // 11
 	pb_resetBrushPos // 12
+	pif_background // 13
 	*/
 
 	// Can't use 'else' because visual studio is broken
@@ -417,6 +470,8 @@ void StateMachine(unsigned char dir) // 0 = up, 1 = left, 2 = down, 3 = right
 				pif_brushY->Select();
 			else if (sideState == 12)
 				pb_resetBrushPos->Select();
+			else if (sideState == 13)
+				pif_background->Select();
 			sectionState = 2;
 		}
 	}
@@ -572,6 +627,11 @@ void StateMachine(unsigned char dir) // 0 = up, 1 = left, 2 = down, 3 = right
 				pb_resetBrushPos->Deselect();
 				pif_brushY->Select();
 			}
+			else if (sideState == 13)
+			{
+				pif_background->Deselect();
+				pb_resetBrushPos->Select();
+			}
 			else
 				return;
 
@@ -640,6 +700,11 @@ void StateMachine(unsigned char dir) // 0 = up, 1 = left, 2 = down, 3 = right
 				pif_brushY->Deselect();
 				pb_resetBrushPos->Select();
 			}
+			else if (sideState == 12)
+			{
+				pb_resetBrushPos->Deselect();
+				pif_background->Select();
+			}
 			else
 				return;
 
@@ -674,6 +739,8 @@ void StateMachine(unsigned char dir) // 0 = up, 1 = left, 2 = down, 3 = right
 				pif_brushY->Deselect();
 			else if (sideState == 12)
 				pb_resetBrushPos->Deselect();
+			else if (sideState == 13)
+				pif_background->Deselect();
 			SelectCanvas();
 			sectionState = 0;
 		}
@@ -704,13 +771,14 @@ int main()
 
 	// Frame
 	Object frame;
-	frame.textures.resize(6);
+	frame.textures.resize(7);
 	frame.textures[0] = t_frame1;
 	frame.textures[1] = t_frame2;
 	frame.textures[2] = t_frame3;
 	frame.textures[3] = t_foregroundFrame;
 	frame.textures[4] = t_backgroundFrame;
 	frame.textures[5] = t_brushFrame;
+	frame.textures[6] = Texture("backgroundSelectorFrame.kcget", { 2, 37 });
 	layer.AddObject(&frame);
 
 
@@ -718,8 +786,8 @@ int main()
 	Button b_exit(&layer, Exit, NULL, VK_RETURN, { 38, 2 }, "Exit"); // exit
 	Button b_import(&layer, Import, NULL, VK_RETURN, { 45, 2 }, "Import"); // import
 	Button b_export(&layer, Export, NULL, VK_RETURN, { 54, 2 }, "Export"); // export
-	IntInputField if_canvasX(&layer, NULL, 1, 30, "30", { 63, 2 }, "CanvasX="); // canvas size x
-	IntInputField if_canvasY(&layer, NULL, 1, 30, "30", { 74, 2 }, "CanvasY="); // canvas size y
+	IntInputField if_canvasX(&layer, NULL, 1, 78, "16", { 63, 2 }, "CanvasX="); // canvas size x
+	IntInputField if_canvasY(&layer, NULL, 1, 30, "16", { 74, 2 }, "CanvasY="); // canvas size y
 	Button b_confirmSize(&layer, ResizeCanvas, NULL, VK_RETURN, { 85, 2 }, "Confirm"); // conifm
 	pb_exit = &b_exit;
 	pb_import = &b_import;
@@ -756,6 +824,7 @@ int main()
 	if_brushY.obj.textures[2].active = false;
 	Button b_resetBrushPos(&layer, ResetBrushPos, NULL, VK_RETURN, { 2, 30 }, "Reset Pos");
 	b_resetBrushPos.obj.textures[1].active = false;
+	IntInputField if_background(&layer, ChangeCanvasBackground, 1, 3, "1", { 2, 34 }, "Back=");
 	pif_fr = &if_fr;
 	pif_fg = &if_fg;
 	pif_fb = &if_fb;
@@ -769,11 +838,12 @@ int main()
 	pif_brushX = &if_brushX;
 	pif_brushY = &if_brushY;
 	pb_resetBrushPos = &b_resetBrushPos;
+	pif_background = &if_background;
 
 
 	// Canvas
 	Object canvas(canvasPos);
-	canvas.textures.resize(5);
+	canvas.textures.resize(6);
 	canvas.colliders.resize(4);
 	pcanvas = &canvas;
 	ResizeCanvas();
@@ -781,21 +851,11 @@ int main()
 	backlayer.AddObject(&canvas);
 
 	Object brush({ canvasPos.x + 1, canvasPos.y + 1});
+	brush.textures.resize(1);
 	brush.colliders.resize(4);
 	brush.OnTick = MoveBrushFast;
 	pbrush = &brush;
 	backlayer.AddObject(&brush);
-
-	Map brushMap;
-	Layer brushLayer;
-	Camera brushCamera({ 0, 0 }, { 10, 10 });
-	brushMap.AddLayer(&brushLayer);
-	brushMap.AddCamera(&brushCamera, true);
-	
-	Object brushVisual;
-	brushVisual.textures.resize(1);
-	pbrushVisual = &brushVisual;
-	brushLayer.AddObject(&brushVisual);
 	UpdateBrush();
 
 
@@ -822,9 +882,6 @@ int main()
 
 		map.cameras[map.activeCameraI]->Render(map.layers);
 		map.cameras[map.activeCameraI]->Draw({ 0, 0 }, 0, 0, 0, 0);
-		
-		brushMap.cameras[brushMap.activeCameraI]->Render(brushMap.layers);
-		brushMap.cameras[brushMap.activeCameraI]->Draw(brush.pos, 0U, 0U, pif_brushX->number, pif_brushY->number);
 		
 		Print();
 
