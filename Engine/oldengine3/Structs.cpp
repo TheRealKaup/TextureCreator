@@ -14,7 +14,7 @@ Engine::RGBA::RGBA(unsigned char red, unsigned char green, unsigned char blue, f
 
 Engine::Vector2D::Vector2D(int xAxis, int yAxis) : x(xAxis), y(yAxis) {}
 
-Engine::UVector2D::UVector2D(unsigned int xAxis, unsigned int yAxis) : x(xAxis), y(yAxis) {}
+Engine::UVector2D::UVector2D(unsigned int x, unsigned int y) : x(x), y(y) {}
 
 Engine::Pixel::Pixel(char32_t character, RGB foreRGB, RGB backRGB) : character(character), frgb(foreRGB), brgb(backRGB) {}
 
@@ -45,70 +45,64 @@ int Engine::TimePoint::Nanoseconds()
 	return std::chrono::duration_cast<std::chrono::nanoseconds>(chornoTimePoint - engineStartTP.chornoTimePoint).count();
 }
 
-// Engine::Texture::Texture() {};
-void Engine::Texture::Block(UVector2D size, SuperChar value, Vector2D pos) {
-	this->pos = pos;
-	t.resize(size.y);
-	for (size_t y = 0; y < t.size(); y++)
-	{
-		t[y].resize(size.x, value);
-		for (size_t x = 0; x < t[y].size(); x++)
-			t[y][x] = value;
-	}
+Engine::Texture::Texture(std::vector<std::vector<SuperChar>> texture, Vector2D pos) : t(texture), pos(pos) {}
+Engine::Texture::Texture(UVector2D size, char defaultChar, RGBA frgba, RGBA brgba, Vector2D pos) : pos(pos) {
+	t.resize(size.y, std::vector<SuperChar>(size.x, Engine::SuperChar(defaultChar, frgba, brgba)));
 }
-void Engine::Texture::File(std::string fileName, Vector2D pos) {
-	this->pos = pos;
+Engine::Texture::Texture(std::string fileName, Vector2D pos) : pos(pos)
+{
 	std::ifstream file(fileName);
 	if (!file.is_open())
 		return;
 	std::string line;
 
-	SuperChar value;
+	SuperChar schar;
 
 	for (size_t y = 0; std::getline(file, line); y++)
 	{
 		// potentially broken if one of the values = 10 ('\n')
-		t.resize(t.size() + 1);
+		t.push_back({});
 		for (size_t x = 0, j = 0; x < line.length(); x++, j++)
 		{
 			if (j == 9)
 				j = 0;
 			if (j == 0)
-				value.frgba.r = (unsigned char)line[x];
+				schar.frgba.r = (unsigned char)line[x];
 			else if (j == 1)
-				value.frgba.g = (unsigned char)line[x];
+				schar.frgba.g = (unsigned char)line[x];
 			else if (j == 2)
-				value.frgba.b = (unsigned char)line[x];
+				schar.frgba.b = (unsigned char)line[x];
 			else if (j == 3)
-				value.frgba.a = (unsigned char)line[x] / 255.0f;
+				schar.frgba.a = (unsigned char)line[x] / 255.0f;
 			else if (j == 4)
-				value.brgba.r = (unsigned char)line[x];
+				schar.brgba.r = (unsigned char)line[x];
 			else if (j == 5)
-				value.brgba.g = (unsigned char)line[x];
+				schar.brgba.g = (unsigned char)line[x];
 			else if (j == 6)
-				value.brgba.b = (unsigned char)line[x];
+				schar.brgba.b = (unsigned char)line[x];
 			else if (j == 7)
-				value.brgba.a = (unsigned char)line[x] / 255.0f;
+				schar.brgba.a = (unsigned char)line[x] / 255.0f;
 			else if (j == 8)
 			{
-				value.character = line[x];
-				t[y].push_back(value);
+				schar.character = line[x];
+				t[y].push_back(schar);
 			}
 		}
 	}
 }
-void Engine::Texture::Write(std::vector<std::string> stringVector, RGBA frgba, RGBA brgba, Vector2D pos) {
-	this->pos = pos;
+Engine::Texture::Texture(std::vector<std::string> stringVector, RGBA frgba = RGBA(255U, 255U, 255U, 1.0f), RGBA brbga = RGBA(0U, 0U, 0U, 0.0f), Vector2D pos) : pos(pos)
+{
+	int y = 0, x = 0;
 	t.resize(stringVector.size());
-	for (size_t y = 0; y < stringVector.size(); y++)
+	for (; y < stringVector.size(); y++)
 	{
 		t[y].resize(stringVector[y].length());
-		for (size_t x = 0; x < stringVector[y].length(); x++)
+		for (x = 0; x < stringVector[y].length(); x++)
 		{
 			t[y][x].character = stringVector[y][x];
 			t[y][x].character = stringVector[y][x];
 			t[y][x].frgba = frgba;
-			t[y][x].brgba = brgba;
+			t[y][x].brgba = brbga;
 		}
 	}
 }

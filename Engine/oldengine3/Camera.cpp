@@ -1,7 +1,7 @@
 #include "Engine.h"
 
-Engine::Camera::Camera(Vector2D position, UVector2D resolution, std::string name)
-	: pos(position), res(resolution) {}
+Engine::Camera::Camera(Vector2D position, Vector2D resolution, std::string name)
+	: pos(position), res(Vector2D(abs(resolution.x), abs(resolution.y))) {}
 
 // <400 before, >400 after second update, >1500 expected max potential before, 1300-2000 now. (20x20)
 
@@ -62,13 +62,13 @@ void Engine::Camera::Render(std::vector<Layer*> layers)
 						if (text->t[y][x].character != ' ')
 						{
 							image[finalY][finalX].character = text->t[y][x].character;
-							image[finalY][finalX].frgb.r = layer->opacity * text->t[y][x].frgba.a * text->t[y][x].frgba.r + (1.0f - layer->opacity * text->t[y][x].frgba.a) * image[finalY][finalX].frgb.r;
-							image[finalY][finalX].frgb.g = layer->opacity * text->t[y][x].frgba.a * text->t[y][x].frgba.g + (1.0f - layer->opacity * text->t[y][x].frgba.a) * image[finalY][finalX].frgb.g;
-							image[finalY][finalX].frgb.b = layer->opacity * text->t[y][x].frgba.a * text->t[y][x].frgba.b + (1.0f - layer->opacity * text->t[y][x].frgba.a) * image[finalY][finalX].frgb.b;
+							image[finalY][finalX].frgb.r = layer->transparency * text->t[y][x].frgba.a * text->t[y][x].frgba.r + (1.0f - layer->transparency * text->t[y][x].frgba.a) * image[finalY][finalX].frgb.r;
+							image[finalY][finalX].frgb.g = layer->transparency * text->t[y][x].frgba.a * text->t[y][x].frgba.g + (1.0f - layer->transparency * text->t[y][x].frgba.a) * image[finalY][finalX].frgb.g;
+							image[finalY][finalX].frgb.b = layer->transparency * text->t[y][x].frgba.a * text->t[y][x].frgba.b + (1.0f - layer->transparency * text->t[y][x].frgba.a) * image[finalY][finalX].frgb.b;
 						}
-						image[finalY][finalX].brgb.r = layer->opacity * text->t[y][x].brgba.a * text->t[y][x].brgba.r + (1.0f - layer->opacity * text->t[y][x].brgba.a) * image[finalY][finalX].brgb.r;
-						image[finalY][finalX].brgb.g = layer->opacity * text->t[y][x].brgba.a * text->t[y][x].brgba.g + (1.0f - layer->opacity * text->t[y][x].brgba.a) * image[finalY][finalX].brgb.g;
-						image[finalY][finalX].brgb.b = layer->opacity * text->t[y][x].brgba.a * text->t[y][x].brgba.b + (1.0f - layer->opacity * text->t[y][x].brgba.a) * image[finalY][finalX].brgb.b;
+						image[finalY][finalX].brgb.r = layer->transparency * text->t[y][x].brgba.a * text->t[y][x].brgba.r + (1.0f - layer->transparency * text->t[y][x].brgba.a) * image[finalY][finalX].brgb.r;
+						image[finalY][finalX].brgb.g = layer->transparency * text->t[y][x].brgba.a * text->t[y][x].brgba.g + (1.0f - layer->transparency * text->t[y][x].brgba.a) * image[finalY][finalX].brgb.g;
+						image[finalY][finalX].brgb.b = layer->transparency * text->t[y][x].brgba.a * text->t[y][x].brgba.b + (1.0f - layer->transparency * text->t[y][x].brgba.a) * image[finalY][finalX].brgb.b;
 					}
 				}
 			}
@@ -102,7 +102,7 @@ void Engine::Camera::Render(std::vector<Layer*> layers)
 	}
 }
 
-void Engine::Camera::Draw(Vector2D pos, unsigned left, unsigned top, unsigned right, unsigned bottom)
+void Engine::Camera::Draw(Vector2D pos, unsigned short left, unsigned short top, unsigned short right, unsigned short bottom)
 {
 	// Return if the image is sized 0
 	if (image.size() == 0)

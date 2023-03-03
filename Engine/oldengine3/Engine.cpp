@@ -3,7 +3,7 @@
 // ---=== Engine Variables ===---
 
 // Objects
-Engine::Map* Engine::activeMap = NULL;
+Engine::Map* Engine::activeMap = nullptr;
 // Data
 std::vector<Engine::Object> Engine::storedObjects = {};
 std::vector<Engine::Layer> Engine::storedLayers = {};
@@ -22,7 +22,7 @@ long int Engine::deltaTime = 0;
 Engine::TimePoint Engine::engineStartTP;
 long int Engine::totalTicks = 0;
 // Config
-std::function<void()> Engine::GlobalOnTick = NULL;
+std::function<void()> Engine::GlobalOnTick;
 bool Engine::running = true;
 // Physics
 std::vector<std::vector<unsigned char>> Engine::colliderTypes = {
@@ -252,112 +252,109 @@ Engine::Layer* Engine::StoreLayer(Layer layer)
 	return &storedLayers[storedLayers.size() - 1];
 }
 
-void Engine::InitializeConsole(unsigned fontX, unsigned fontY, unsigned columns, unsigned rows, std::wstring fontName, std::wstring title)
+void Engine::InitializeConsole(unsigned short fontX, unsigned short fontY, unsigned short columns, unsigned short rows, const wchar_t* title)
 {
-	// if size == {0, 0}, don't change window size at all.
-	//		if columns == 0, use c. 
-	//		if rows == 0, use r. 
-	// if font == {0, 0} && fontName.length() == 0, don't change font size at all.
-	//		if fontX == 0, use fX.
-	//		if fontY == 0, use fY.
-	//		if fontName.length() == 0, use lastFontName.
-	// if title.length() == 0, don't change title at all
+	// BACK TO NOT WORKING!!! YAYYYYY FUCK YOU MICROSOFT YOU PIECES OF FUCKING SHIT FUCK YOU YOU FUCKING FUCKS HOLY FUCKING SHIT FUCK YOU
+	// Can't set to smaller size than before.
 
-	static unsigned lastFontY = 16;
-	static unsigned lastFontX = 16;
-	static unsigned lastColumns = 30;
-	static unsigned lastRows = 30;
-	static std::wstring lastFontName = L"Consolas";
+	if (columns == 0)
+		columns = 1;
+	if (columns == 0)
+		columns = 1;
+	if (fontX == 0)
+		fontX = 1;
+	if (fontY == 0)
+		fontY = 1;
+
+	// Resize the engine's image
+	image = std::vector<std::vector<Pixel>>(rows, std::vector<Pixel>(columns));
 
 	// Enable UTF-8
 	SetConsoleOutputCP(65001);
 	
+	// Give it a title
+	SetConsoleTitle(title);
+
 	// Enable virtual sequences
 	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	DWORD mode;
 	GetConsoleMode(hOut, &mode);
 	SetConsoleMode(hOut, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-	
+
 	// Set cursor at 0,0
 	std::cout << "\033[0;0H";
 	// Hide cursor
 	std::cout << "\033[?25l";
-
-	// Resize the engine's image
-	if (rows > 0 || columns > 0) // if non are set to change, don't change at all.
-	{
-		// Got to this point if at least one of them are set to change.
-
-		unsigned decidedColumns= columns > 0 ? columns : lastColumns;
-		unsigned decidedRows = rows > 0 ? rows : lastRows;
-
-		image.resize(decidedRows);
-
-		for (size_t y = 0; y < image.size(); y++)
-			image[y].resize(decidedColumns);
-
-		// Change window size
-		SMALL_RECT srect;
-		srect.Left = 0;
-		srect.Top = 0;
-		srect.Right = decidedColumns;
-		srect.Bottom = decidedRows;
-		for (int i = 0; i < 10; i++) // Yes, seriously.
-		{
-			SetConsoleWindowInfo(hOut, true, &srect);
-			SetConsoleScreenBufferSize(hOut, { (short)(decidedColumns + 1), (short)(decidedRows + 1) });
-		}
-	}
 	
-	// Change font
-	if (fontX > 0 || fontY > 0 || fontName.length() > 0)
-	{
-		CONSOLE_FONT_INFOEX fontInfo;
-		fontInfo.cbSize = sizeof(fontInfo);
-		fontInfo.dwFontSize.X = fontX > 0 ? fontX : lastFontX;
-		fontInfo.dwFontSize.Y = fontY > 0 ? fontY : lastFontY;
-		fontInfo.FontFamily = FF_DONTCARE;
-		fontInfo.FontWeight = FW_NORMAL;
-		fontInfo.nFont = 0;
-		std::wstring decidedFontName = fontName.length() > 0 ? fontName : lastFontName;
-		for (size_t i = 0; i < LF_FACESIZE; i++)
-		{
-			if (i < decidedFontName.length())
-				fontInfo.FaceName[i] = decidedFontName[i];
-			else {
-				fontInfo.FaceName[i] = '\0';
-				break;
-			}
-		}
-		SetCurrentConsoleFontEx(hOut, false, &fontInfo);
-	}
-
-	// Give it a title
-	if (title.length() > 0)
-		SetConsoleTitle(title.c_str());
-
 	// Disable Shift+Arrow/mouse selection and Ctrl+C
 	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
 	GetConsoleMode(hIn, &mode);
 	SetConsoleMode(hIn, mode & ~ENABLE_QUICK_EDIT_MODE & ~ENABLE_PROCESSED_INPUT);
 	RegisterHotKey(GetConsoleWindow(), 0, MOD_ALT, VK_RETURN);
+
+	// Change font size
+	CONSOLE_FONT_INFOEX fontInfo;
+	GetCurrentConsoleFontEx(hOut, false, &fontInfo);
+	fontInfo.cbSize = sizeof(fontInfo);
+	fontInfo.dwFontSize.X = fontX;
+	fontInfo.dwFontSize.Y = fontY;
+	fontInfo.FontFamily = FF_DONTCARE;
+	SetCurrentConsoleFontEx(hOut, false, &fontInfo);
+
+	// Change window size according to the font size, columns and rows
+	SMALL_RECT srect;
+	srect.Left = 0;
+	srect.Top = 0;
+	srect.Right = columns;
+	srect.Bottom = rows;
+	for (int i = 0; i < 10; i++) // Yes, seriously.
+	{
+		SetConsoleWindowInfo(hOut, true, &srect);
+		SetConsoleScreenBufferSize(hOut, { (short)(columns + 1), (short)(rows + 1) });
+	}
+
 	// Hide the scrollbars
 	ShowScrollBar(GetConsoleWindow(), SB_BOTH, false);
+
+	// Ctrl + scroll still works???
 	// Disable the resizing of the console and the option for fullscreen
 	SetWindowLong(GetConsoleWindow(), GWL_STYLE, GetWindowLong(GetConsoleWindow(), GWL_STYLE) & ~WS_SIZEBOX & ~WS_MAXIMIZEBOX); // & ~WS_TILEDWINDOW
+}
+void Engine::ResizeConsole(unsigned short columns, unsigned short rows)
+{
+	// Not a reliable function.
+	if (columns == 0)
+		columns = 1;
+	if (rows == 0)
+		rows = 1;
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	image = std::vector<std::vector<Pixel>>(rows, std::vector<Pixel>(columns));
+	SMALL_RECT srect;
+	srect.Left = 0;
+	srect.Top = 0;
+	srect.Right = columns;
+	srect.Bottom = rows;
+	SetConsoleWindowInfo(hOut, true, &srect);
+	SetConsoleScreenBufferSize(hOut, { (short)(columns + 1), (short)(rows + 1) }); 
+	SetConsoleWindowInfo(hOut, true, &srect);
+	ShowScrollBar(GetConsoleWindow(), SB_BOTH, false);
+}
+void Engine::ResizeConsoleFont(unsigned short x, unsigned short y)
+{
+	if (x == 0)
+		x == 1;
+	if (y == 0)
+		y = 1;
 
-	
-	// Update last values
-	if (fontY > 0)
-		lastFontY = fontY;
-	if (fontX > 0)
-		lastFontX = fontX;
-	if (columns > 0)
-		lastColumns = columns;
-	if (rows > 0)
-		lastRows = rows;
-	if (fontName.length() > 0)
-		lastFontName = fontName;
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
+	CONSOLE_FONT_INFOEX fontInfo;
+	GetCurrentConsoleFontEx(hOut, false, &fontInfo);
+	fontInfo.cbSize = sizeof(fontInfo);
+	fontInfo.dwFontSize.X = x;
+	fontInfo.dwFontSize.Y = y;
+	fontInfo.FontFamily = FF_DONTCARE;
+	SetCurrentConsoleFontEx(hOut, false, &fontInfo);
 }
 void Engine::Print()
 {
@@ -543,5 +540,74 @@ void Engine::CallOnTicks(Engine::Map* map)
 	{
 		if (map->cameras[c]->OnTick)
 			map->cameras[c]->OnTick();
+	}
+}
+
+void Engine::GameLoop(unsigned int ticksPerSecond)
+{
+	InitializeConsole(12, 12, 50, 50, L"Default-Game-Loop KCGE Game");
+
+	srand(time(NULL));
+	
+	if (ticksPerSecond == 0)
+		tps = 10000;
+	else
+		tps = ticksPerSecond;
+
+	long tickLengthMicrosec, l, o;
+
+	// First step: call user defined functions. First input events functions, then OnTick.
+	// Second step: process collision on the active map. This will move, push and auto-unstuck objects. /!\ Collision is disabled in this version of the engine.
+	// Third step: render what's going on in the active map through the active camera.
+	// Fourth step: handle time. If the duration of the current tick is shorter than the expected tick length (tickLengthMicrosec), delay will be set to the remaining time so the game's speed will be consistent.
+
+	while (running)
+	{
+		thisTickStartTP.SetToNow();
+
+		ManageInputs();
+		
+		tickLengthMicrosec = 1000000.0f / tps;
+
+		if (GlobalOnTick)
+			GlobalOnTick();
+
+		if (activeMap)
+		{
+			if (activeMap->OnTick) 
+				activeMap->OnTick();
+
+			for (l = 0; l < activeMap->layers.size(); l++)
+			{
+				if (activeMap->layers[l]->OnTick)
+					activeMap->layers[l]->OnTick();
+
+				for (o = 0; o < activeMap->layers[l]->objects.size(); o++)
+				{
+					if (activeMap->layers[l]->objects[o]->OnTick)
+						activeMap->layers[l]->objects[o]->OnTick();
+				}
+			}
+
+			if (activeMap->activeCameraI > -1 && activeMap->activeCameraI < activeMap->cameras.size())
+			{
+				if (activeMap->cameras[activeMap->activeCameraI]->OnTick)
+					activeMap->cameras[activeMap->activeCameraI]->OnTick();
+				
+				activeMap->cameras[activeMap->activeCameraI]->Render(activeMap->layers);
+				activeMap->cameras[activeMap->activeCameraI]->Draw();
+				Print();
+			}
+		}
+
+		deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - thisTickStartTP.chornoTimePoint).count();
+		potentialfps = 1000000.0f / deltaTime;
+
+		while (deltaTime <= tickLengthMicrosec - 1)
+			deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - thisTickStartTP.chornoTimePoint).count();
+
+		fps = 1000000.0f / deltaTime;
+
+		totalTicks++;
 	}
 }

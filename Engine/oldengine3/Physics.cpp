@@ -1,3 +1,24 @@
+/*
+Features:
+
+- Collision checking
+	When objects move will check for surroundings and react with user defined collider types (what can push / go through what)
+	(DONE)
+
+- Gravity
+	Applies force[s] in a straight or point centered direction or to every object which has gravity enabled, given by mass and velocity
+
+-Called functions
+	Calls user defined functions when an event from a generous selection happens, also suppliend all types of data.
+- Path finding when an object moves but can't go through, or gets stuck.
+
+- Bounciness
+	When an object collides, bounciness will be applied if enabled
+
+The physics engine in KCGE has almost all the features a normal popular 2D game engine has (for example Unity), but it's only precise on int level (because of graphics), and doesn't have rotation.
+I will try to get the most out of the limited graphics.
+*/
+
 #include "Engine.h"
 
 using namespace Engine;
@@ -165,8 +186,8 @@ bool Object::Move(Vector2D dir)
 				int cldrPosY = cldr->pos.y + pos.y + dir.y;
 				int oCldrPosY = oCldr->pos.y + oObj->pos.y;
 
-				if (cldrPosX < oCldrPosX + (int)oCldr->size.x && cldrPosX + (int)cldr->size.x > oCldrPosX
-					&& cldrPosY < oCldrPosY + (int)oCldr->size.y && cldrPosY + (int)cldr->size.y > oCldrPosY)
+				if (cldrPosX < oCldrPosX + oCldr->size.x && cldrPosX + cldr->size.x > oCldrPosX
+					&& cldrPosY < oCldrPosY + oCldr->size.y && cldrPosY + cldr->size.y > oCldrPosY)
 				{
 					// Collision!
 

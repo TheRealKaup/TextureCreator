@@ -5,7 +5,6 @@
 #define Characters_Upper 'Q','W','E','R','T','Y','U','I','O','P','A','S','D','F','G','H','J','K','L','Z','X','C','V','B','N','M'
 #define Characters_Digits '1','2','3','4','5','6','7','8','9','0'
 #define Characters_Special '`','~','!','@','#','$','%','^','&','*','(',')','-','_','=','+','[','{',']','}','\\','|',';',':','\'','"',',','<','.','>','/','?'
-#define Characters_All Characters_Lower, Characters_Upper, Characters_Digits, Characters_Special
 
 namespace Widgets
 {
@@ -23,6 +22,7 @@ namespace Widgets
 		Engine::Object obj;
 
 	private:
+
 		void InsideOnDown()
 		{
 			if (selected)
@@ -62,36 +62,44 @@ namespace Widgets
 		}
 
 	public:
+
 		void Select()
 		{
-			for (size_t i = 0; i < obj.textures.size(); i++)
+			if (selected == false)
 			{
-				for (size_t y = 0; y < obj.textures[i].t.size(); y++)
+				for (size_t i = 0; i < obj.textures.size(); i++)
 				{
-					for (size_t x = 0; x < obj.textures[i].t[y].size(); x++)
-						obj.textures[i].t[y][x].frgba = selectedRGBA;
+					for (size_t y = 0; y < obj.textures[i].t.size(); y++)
+					{
+						for (size_t x = 0; x < obj.textures[i].t[y].size(); x++)
+							obj.textures[i].t[y][x].frgba = selectedRGBA;
+					}
 				}
-			}
 
-			selected = true;
+				selected = true;
+			}
 		}  
 
 		void Deselect()
 		{
-			for (size_t i = 0; i < obj.textures.size(); i++)
+			if (selected == true)
 			{
-				for (size_t y = 0; y < obj.textures[i].t.size(); y++)
+				for (size_t i = 0; i < obj.textures.size(); i++)
 				{
-					for (size_t x = 0; x < obj.textures[i].t[y].size(); x++)
-						obj.textures[i].t[y][x].frgba = notRGBA;
+					for (size_t y = 0; y < obj.textures[i].t.size(); y++)
+					{
+						for (size_t x = 0; x < obj.textures[i].t[y].size(); x++)
+							obj.textures[i].t[y][x].frgba = notRGBA;
+					}
 				}
-			}
 
-			selected = false;
+				selected = false;
+			}
 		}
 
+
 		Button(Engine::Layer* layer, std::function<void()> OnDown, std::function<void()> OnUp, int key = VK_RETURN, Engine::Vector2D pos = { 0, 0 }, std::string text = "Button",
-			Engine::RGBA notRGBA = { 150, 150, 150, 1.0f }, Engine::RGBA selectedRGBA = { 255, 255, 255, 1.0f }, Engine::RGBA downRGBA = { 150, 150, 255, 1.0f })
+			Engine::RGBA notRGBA = { 100, 100, 100, 1.0f }, Engine::RGBA selectedRGBA = { 255, 255, 255, 1.0f }, Engine::RGBA downRGBA = { 150, 150, 255, 1.0f })
 			: OnUp(OnUp), OnDown(OnDown), notRGBA(notRGBA), selectedRGBA(selectedRGBA), downRGBA(downRGBA)
 		{
 			Engine::RegisterInputHandler(key, true, std::bind(&Button::InsideOnDown, this));
@@ -100,21 +108,25 @@ namespace Widgets
 			obj.pos = pos;
 
 			// Texture
+			Engine::Texture fieldText({ text }, notRGBA, { 0, 0, 0, 0.0f }, { 1, 1 });
+			Engine::Texture frame({2 + text.size(), 3}, ' ', notRGBA, { 0, 0, 0, 0.0f }, {0U, 0U});
+
+			frame.t[0][0] = Engine::SuperChar('#', notRGBA);
+			frame.t[0][text.length() + 1] = Engine::SuperChar('#', notRGBA);
+			for (size_t x = 1; x <= text.length(); x++)
+				frame.t[0][x] = Engine::SuperChar('-', notRGBA);
+			
+			frame.t[1][0] = Engine::SuperChar('|', notRGBA);
+			frame.t[1][text.length() + 1] = Engine::SuperChar('|', notRGBA);
+
+			frame.t[2][0] = Engine::SuperChar('#', notRGBA);
+			frame.t[2][text.length() + 1] = Engine::SuperChar('#', notRGBA);
+			for (size_t x = 1; x <= text.length(); x++)
+				frame.t[2][x] = Engine::SuperChar('-', notRGBA);
+
 			obj.textures.resize(2);
-			
-			obj.textures[0].Write({ text }, notRGBA, { 0, 0, 0, 0.0f }, { 1, 1 });
-			
-			obj.textures[1].Block({ 2 + text.size(), 3 }, Engine::SuperChar(' ', {0, 0, 0, 0.0f}), {0U, 0U});
-			obj.textures[1].t[0][0] = Engine::SuperChar('#', notRGBA);
-			obj.textures[1].t[0][text.length() + 1] = Engine::SuperChar('#', notRGBA);
-			for (size_t x = 1; x <= text.length(); x++)
-				obj.textures[1].t[0][x] = Engine::SuperChar('-', notRGBA);
-			obj.textures[1].t[1][0] = Engine::SuperChar('|', notRGBA);
-			obj.textures[1].t[1][text.length() + 1] = Engine::SuperChar('|', notRGBA);
-			obj.textures[1].t[2][0] = Engine::SuperChar('#', notRGBA);
-			obj.textures[1].t[2][text.length() + 1] = Engine::SuperChar('#', notRGBA);
-			for (size_t x = 1; x <= text.length(); x++)
-				obj.textures[1].t[2][x] = Engine::SuperChar('-', notRGBA);
+			obj.textures[0] = fieldText;
+			obj.textures[1] = frame;
 
 			layer->AddObject(&obj);
 		}
@@ -138,8 +150,8 @@ namespace Widgets
 
 	private:
 		unsigned int min, max;
-		unsigned char maxDigits = 0;
-		unsigned char minDigits = 0;
+		unsigned int maxDigits = 0;
+		unsigned int minDigits = 0;
 		
 		void InternalInsert()
 		{
@@ -149,9 +161,9 @@ namespace Widgets
 				{
 					if (currentDigit == 0)
 						return;
-
+					
 					visibleNumber /= 10;
-
+					
 					currentDigit--;
 					obj.textures[0].t[0][currentDigit].character = ' ';
 				}
@@ -162,10 +174,10 @@ namespace Widgets
 
 					obj.textures[0].t[0][currentDigit].character = Engine::lastDownKey;
 					currentDigit++;
-
+					
 					visibleNumber = visibleNumber * 10 + Engine::lastDownKey - '0';
 				}
-
+				
 				number = visibleNumber;
 				if (number < min)
 					number = min;
@@ -178,6 +190,7 @@ namespace Widgets
 		}
 
 	public:
+
 		void Select()
 		{
 			for (size_t i = 0; i < obj.textures.size(); i++)
@@ -201,17 +214,17 @@ namespace Widgets
 
 				std::string newTexture = std::to_string(min);
 				newTexture.resize(maxDigits, ' ');
-				obj.textures[0].Write({ newTexture }, notRGBA, Engine::RGBA(), obj.textures[0].pos);
+				obj.textures[0].t = Engine::Texture({ newTexture }, notRGBA, Engine::RGBA(), obj.textures[0].pos).t;
 			}
 			if (visibleNumber > max)
 			{
 				visibleNumber = max;
-
+				
 				currentDigit = maxDigits;
 
 				std::string newTexture = std::to_string(max);
 				newTexture.resize(maxDigits, ' ');
-				obj.textures[0].Write({ newTexture }, notRGBA, Engine::RGBA(), obj.textures[0].pos);
+				obj.textures[0].t = Engine::Texture({ newTexture }, notRGBA, Engine::RGBA(), obj.textures[0].pos).t;
 			}
 
 			for (size_t i = 0; i < obj.textures.size(); i++)
@@ -225,27 +238,31 @@ namespace Widgets
 
 			if (visibleNumber >= min && visibleNumber <= max)
 				number = visibleNumber;
-
+			
 			selected = false;
 		}
 
-		void ChangeValue(std::string newNumber)
+		void ChangeValue(std::string num)
 		{
-			obj.textures[0].Block({ maxDigits, 1 }, Engine::SuperChar(' ', notRGBA, { 0, 0, 0, 0.0f }), { 1 + (int)obj.textures[1].t[0].size(), 1 });
+			// Texture
+			Engine::Texture field({ maxDigits, 1 }, ' ', notRGBA, { 0, 0, 0, 0.0f }, { 1 + (int)obj.textures[1].t[0].size(), 1});
 			number = 0;
 			currentDigit = 0;
-			for (int x = 0; x < maxDigits && x < newNumber.length(); x++)
+			for (int x = 0; x < maxDigits && x < num.length(); x++)
 			{
 				currentDigit++;
 				number *= 10;
-				number += newNumber[x] - '0';
-				obj.textures[0].t[0][x] = Engine::SuperChar(newNumber[x], notRGBA);
+				number += num[x] - '0';
+				field.t[0][x] = Engine::SuperChar(num[x], notRGBA);
 			}
 			visibleNumber = number;
+
+			obj.textures[0] = field;
 		}
 
+
 		IntInputField(Engine::Layer* layer, std::function<void()> OnInsert, unsigned int min = 0, unsigned int max = 255, std::string defaultNum = "0", Engine::Vector2D pos = {0, 0},
-			std::string text = "Value = ", Engine::RGBA notRGBA = { 150, 150, 150, 1.0f }, Engine::RGBA selectedRGBA = { 255, 255, 255, 1.0f })
+			std::string text = "Value = ", Engine::RGBA notRGBA = { 100, 100, 100, 1.0f }, Engine::RGBA selectedRGBA = { 255, 255, 255, 1.0f })
 			: OnInsert(OnInsert), min(min), max(max), notRGBA(notRGBA), selectedRGBA(selectedRGBA)
 		{
 			Engine::RegisterInputHandler('0', true, std::bind(&IntInputField::InternalInsert, this));
@@ -279,31 +296,34 @@ namespace Widgets
 			}
 
 			// Texture
-			obj.textures.resize(3);
-
-			obj.textures[0].Block({ maxDigits, 1 }, Engine::SuperChar(' ', notRGBA, { 0, 0, 0, 0.0f }), { 1 + (int)text.length(), 1 });
+			Engine::Texture field({ maxDigits, 1 }, ' ', notRGBA, { 0, 0, 0, 0.0f }, {1 + (int)text.length(), 1});
 			for (int x = 0; x < maxDigits && x < defaultNum.length(); x++)
 			{
 				currentDigit++;
 				number *= 10;
 				number += defaultNum[x] - '0';
-				obj.textures[0].t[0][x] = Engine::SuperChar(defaultNum[x], notRGBA);
+				field.t[0][x] = Engine::SuperChar(defaultNum[x], notRGBA);
 			}
 			visibleNumber = number;
 
-			obj.textures[1].Write({ text }, notRGBA, Engine::RGBA(), { 1, 1 });
+			Engine::Texture fieldText({ text }, notRGBA, Engine::RGBA(), {1, 1});
 
-			obj.textures[2].Block({ 2 + text.size() + maxDigits, 3 }, Engine::SuperChar(' ', { 0, 0, 0, 0.0f }), { 0, 0 });
-			obj.textures[2].t[0][0] = Engine::SuperChar('#', notRGBA);
-			obj.textures[2].t[0][obj.textures[2].t[0].size() - 1] = Engine::SuperChar('#', notRGBA);
-			for (int x = 1; x < obj.textures[2].t[0].size() - 1; x++)
-				obj.textures[2].t[0][x] = Engine::SuperChar('-', notRGBA);
-			obj.textures[2].t[1][0] = Engine::SuperChar('|', notRGBA);
-			obj.textures[2].t[1][obj.textures[2].t[1].size() - 1] = Engine::SuperChar('|', notRGBA);
-			obj.textures[2].t[2][0] = Engine::SuperChar('#', notRGBA);
-			obj.textures[2].t[2][obj.textures[2].t[2].size() - 1] = Engine::SuperChar('#', notRGBA);
-			for (int x = 1; x < obj.textures[2].t[2].size() - 1; x++)
-				obj.textures[2].t[2][x] = Engine::SuperChar('-', notRGBA);
+			Engine::Texture frame({ 2 + (int)text.size() + maxDigits, 3 }, ' ', notRGBA, { 0, 0, 0, 0.0f }, { 0, 0 });
+			frame.t[0][0] = Engine::SuperChar('#', notRGBA);
+			frame.t[0][frame.t[0].size() - 1] = Engine::SuperChar('#', notRGBA);
+			for (int x = 1; x < frame.t[0].size() - 1; x++)
+				frame.t[0][x] = Engine::SuperChar('-', notRGBA);
+			frame.t[1][0] = Engine::SuperChar('|', notRGBA);
+			frame.t[1][frame.t[1].size() - 1] = Engine::SuperChar('|', notRGBA);
+			frame.t[2][0] = Engine::SuperChar('#', notRGBA);
+			frame.t[2][frame.t[2].size() - 1] = Engine::SuperChar('#', notRGBA);
+			for (int x = 1; x < frame.t[2].size() - 1; x++)
+				frame.t[2][x] = Engine::SuperChar('-', notRGBA);
+			
+			obj.textures.resize(3);
+			obj.textures[0] = field;
+			obj.textures[1] = fieldText;
+			obj.textures[2] = frame;
 
 			layer->AddObject(&obj);
 		}
@@ -374,51 +394,42 @@ namespace Widgets
 		}
 
 	public:
+
 		void Select()
 		{
-			for (size_t i = 0; i < obj.textures.size(); i++)
+			if (selected == false)
 			{
-				for (size_t y = 0; y < obj.textures[i].t.size(); y++)
+				for (size_t i = 0; i < obj.textures.size(); i++)
 				{
-					for (size_t x = 0; x < obj.textures[i].t[y].size(); x++)
-						obj.textures[i].t[y][x].frgba = selectedRGBA;
+					for (size_t y = 0; y < obj.textures[i].t.size(); y++)
+					{
+						for (size_t x = 0; x < obj.textures[i].t[y].size(); x++)
+							obj.textures[i].t[y][x].frgba = selectedRGBA;
+					}
 				}
+				
+				selected = true;
 			}
-			
-			selected = true;
 		}
 
 		void Deselect()
 		{
-			for (size_t i = 0; i < obj.textures.size(); i++)
+			if (selected == true)
 			{
-				for (size_t y = 0; y < obj.textures[i].t.size(); y++)
+				for (size_t i = 0; i < obj.textures.size(); i++)
 				{
-					for (size_t x = 0; x < obj.textures[i].t[y].size(); x++)
-						obj.textures[i].t[y][x].frgba = notRGBA;
+					for (size_t y = 0; y < obj.textures[i].t.size(); y++)
+					{
+						for (size_t x = 0; x < obj.textures[i].t[y].size(); x++)
+							obj.textures[i].t[y][x].frgba = notRGBA;
+					}
 				}
+				selected = false;
 			}
-			selected = false;
-		}
-
-		void ChangeValue(std::string newString)
-		{
-			string.resize(newString.length() > maxChars ? maxChars : newString.length());
-			for (size_t x = 0; x < maxChars; x++)
-			{
-				if (x < string.length())
-				{
-					string[x] = newString[x];
-					obj.textures[0].t[0][x].character = newString[x];
-				}
-				else
-					obj.textures[0].t[0][x].character = ' ';
-			}
-			currentChar = string.length();
 		}
 
 		StringInputField(Engine::Layer* layer = 0, std::function<void()> OnInsert = 0, std::vector<int> allowedCharacters = {}, Engine::Vector2D pos = { 0, 0 }, std::string text = "Value = ",
-			unsigned int maxChars = 8, std::string defaultString = "String", Engine::RGBA notRGBA = { 150, 150, 150, 1.0f }, Engine::RGBA selectedRGBA = { 255, 255, 255, 1.0f })
+			unsigned int maxChars = 8, std::string defaultString = "String", Engine::RGBA notRGBA = { 100, 100, 100, 1.0f }, Engine::RGBA selectedRGBA = { 255, 255, 255, 1.0f })
 			: OnInsert(OnInsert), maxChars(maxChars), notRGBA(notRGBA), selectedRGBA(selectedRGBA)
 		{
 			// Registering input
@@ -431,8 +442,7 @@ namespace Widgets
 			obj.pos = pos;
 
 			// Texture
-			Engine::Texture field;
-			field.Block({ maxChars, 1 }, Engine::SuperChar(' ', notRGBA, { 0, 0, 0, 0.0f }), { 1 + (int)text.length(), 1 });
+			Engine::Texture field({ maxChars, 1 }, ' ', notRGBA, { 0, 0, 0, 0.0f }, { 1 + (int)text.length(), 1 });
 			for (int x = 0; x < maxChars && x < defaultString.length(); x++)
 			{
 				currentChar++;
@@ -440,11 +450,9 @@ namespace Widgets
 				field.t[0][x] = Engine::SuperChar(defaultString[x], notRGBA);
 			}
 
-			Engine::Texture fieldText;
-			fieldText.Write({ text }, notRGBA, Engine::RGBA(), { 1, 1 });
+			Engine::Texture fieldText({ text }, notRGBA, Engine::RGBA(), { 1, 1 });
 
-			Engine::Texture frame;
-			frame.Block({ 2U + text.size() + maxChars, 3 }, Engine::SuperChar(' ', {0, 0, 0, 0.0f}), {0, 0});
+			Engine::Texture frame({ 2 + text.size() + maxChars, 3 }, ' ', notRGBA, { 0, 0, 0, 0.0f }, { 0, 0 });
 			frame.t[0][0] = Engine::SuperChar('#', notRGBA);
 			frame.t[0][frame.t[0].size() - 1] = Engine::SuperChar('#', notRGBA);
 			for (int x = 1; x < frame.t[0].size() - 1; x++)

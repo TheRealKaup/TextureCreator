@@ -1,6 +1,5 @@
 #include "Engine/Engine.h"
 #include "Engine/Widgets.h"
-#include "Textures.h"
 
 /*
 TODO:
@@ -48,7 +47,7 @@ Object* pbrush;
 
 
 RGBA canvasSelected(255, 255, 255, 1.0f);
-RGBA canvasUnselected(150, 150, 150, 1.0f);
+RGBA canvasUnselected(100, 100, 100, 1.0f);
 Vector2D canvasPos(14, 6);
 
 int brushSpeed = 0;
@@ -145,18 +144,18 @@ void ResizeCanvas()
 	}
 
 	// Top frame
-	pcanvas->textures[1] = Texture({ sizeX, 1 }, '-', canvasUnselected, { 0, 0, 0, 0.0f }, { 1, 0 });
+	pcanvas->textures[1].Block({ sizeX, 1 }, Engine::SuperChar('-', canvasUnselected, { 0, 0, 0, 0.0f }), { 1, 0 });
 
 	// Left frame
-	pcanvas->textures[2] = Texture({ 1, sizeY + 2 }, '|', canvasUnselected, { 0, 0, 0, 0.0f }, { 0, 0 });
+	pcanvas->textures[2].Block({1, sizeY + 2}, Engine::SuperChar('|', canvasUnselected, {0, 0, 0, 0.0f}), {0, 0});
 	pcanvas->textures[2].t[0][0].character = '/';
 	pcanvas->textures[2].t[sizeY + 1][0].character = '\\';
 
 	// Bottom frame
-	pcanvas->textures[3] = Texture({ sizeX, 1 }, '-', canvasUnselected, { 0, 0, 0, 0.0f }, { 1, (int)(sizeY + 1) });
+	pcanvas->textures[3].Block({ sizeX, 1 }, Engine::SuperChar('-', canvasUnselected, { 0, 0, 0, 0.0f }), { 1, (int)(sizeY + 1) });
 
 	// Right frame
-	pcanvas->textures[4] = Texture({ 1, sizeY + 2 }, '|', canvasUnselected, { 0, 0, 0, 0.0f }, { (int)(sizeX + 1), 0 });
+	pcanvas->textures[4].Block({ 1, sizeY + 2 }, Engine::SuperChar('|', canvasUnselected, { 0, 0, 0, 0.0f }), { (int)(sizeX + 1), 0 });
 	pcanvas->textures[4].t[0][0].character = '\\';
 	pcanvas->textures[4].t[sizeY + 1][0].character = '/';
 
@@ -260,11 +259,11 @@ void DrawToCanvas()
 void UpdateBrush()
 {
 	// Texture
-	pbrush->textures[0] = Texture(
+	pbrush->textures[0].Block(
 		{ (unsigned int)pif_brushX->number, (unsigned int)pif_brushY->number },
-		psf_char->string.size() == 0 ? ' ' : psf_char->string[0],
+		Engine::SuperChar(psf_char->string.size() == 0 ? ' ' : psf_char->string[0],
 		{ (unsigned char)(pif_fr->number), (unsigned char)(pif_fg->number), (unsigned char)(pif_fb->number), pif_fa->number / 255.0f },
-		{ (unsigned char)(pif_br->number), (unsigned char)(pif_bg->number), (unsigned char)(pif_bb->number), pif_ba->number / 255.0f },
+		{ (unsigned char)(pif_br->number), (unsigned char)(pif_bg->number), (unsigned char)(pif_bb->number), pif_ba->number / 255.0f }),
 		{ 0, 0 }
 	);
 
@@ -772,13 +771,43 @@ int main()
 	// Frame
 	Object frame;
 	frame.textures.resize(7);
-	frame.textures[0] = t_frame1;
-	frame.textures[1] = t_frame2;
-	frame.textures[2] = t_frame3;
-	frame.textures[3] = t_foregroundFrame;
-	frame.textures[4] = t_backgroundFrame;
-	frame.textures[5] = t_brushFrame;
-	frame.textures[6] = Texture("backgroundSelectorFrame.kcget", { 2, 37 });
+	frame.textures[0].Block({ 1, 200 }, Engine::SuperChar('|', { 87, 166, 75 }, { 0, 0, 0 }), {0, 5}); // up frame
+	frame.textures[1].Write({ // logo
+		"  ||  /   ----  ----  ----  ___ ___ /",
+		" ||| /\\   |     |  _  |--    |  |   |",
+		"||||/  \\  \\___  \\__/  \\___   |  \\__ |",
+		" ___________________________________/",
+		"/"
+		} , { 87, 166, 75 }, { 0, 0, 0 }, { 0, 1 });
+	frame.textures[2].Block({ 200, 1 }, Engine::SuperChar('_', { 87, 166, 75 }, { 0, 0, 0 }), { 37, 0 }); //side frame
+	frame.textures[3].Write({ // foreground color frame
+		"Foreground",
+		"#-----#",
+		"|     |",
+		"|     |",
+		"|     |",
+		"|     |",
+		"#-----#"
+		}, { 150 ,150, 150, 1.0f }, { 0, 0, 0, 0.0f }, { 2, 6 }); 
+	frame.textures[4].Write({ // background color frame
+		"Background",
+		"#-----#",
+		"|     |",
+		"|     |",
+		"|     |",
+		"|     |",
+		"#-----#"
+		}, { 150 ,150, 150, 1.0f }, { 0, 0, 0, 0.0f }, { 2, 14 });
+	frame.textures[5].Write({ // brush settings frame
+		"Settings",
+		"#---------#",
+		"|         |",
+		"|         |",
+		"|         |",
+		"|         |",
+		"#---------#"
+		}, { 150 ,150, 150, 1.0f }, { 0, 0, 0, 0.0f }, { 2, 26 });
+	frame.textures[6].File("backgroundSelectorFrame.kcget", { 2, 37 }); // background selector options
 	layer.AddObject(&frame);
 
 
@@ -815,7 +844,6 @@ int main()
 	IntInputField if_ba(&layer, UpdateBrush, 0, 255, "0", { 2, 18 }, "A="); // ba
 	if_ba.obj.textures[2].active = false;
 	StringInputField sf_char(&layer, UpdateBrush, { Characters_Lower, Characters_Digits, Characters_Upper, Characters_Special }, { 2, 22 }, "Char=", 1, "#"); // char
-	// sf_char.obj.textures[2].active = false;
 	IntInputField if_brushSpeed(&layer, NULL, 0, 9, "2", { 2, 27 }, "Speed="); // brush speed
 	if_brushSpeed.obj.textures[2].active = false;
 	IntInputField if_brushX(&layer, UpdateBrush, 1, 9, "1", { 2, 28 }, "BrushX="); // brush size x
@@ -871,7 +899,6 @@ int main()
 	RegisterInputHandler('D', true, std::bind(MoveBrushSlow, 3), false);
 
 	RegisterInputHandler(VK_RETURN, true, DrawToCanvas, true);
-
 
 	// Engine
 	InitializeConsole(16, 16, 95, 39, L"KCGETC");

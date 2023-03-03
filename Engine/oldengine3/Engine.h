@@ -10,14 +10,13 @@
 
 #pragma once
 
-#include <iostream> // Printing, strings, et cetera
-#include <string> // to_string
+#include <Windows.h> // Console related
 #include <vector> // Heavily based
+#include <iostream> // Printing, strings, et cetera
 #include <functional> // For sharing functions with the engine for it to call on events
 #include <thread> // For sleeping, time managing.
+#include <string> // to_string
 #include <fstream> // Loading textures
-#include <Windows.h> // Console related
-#include <xaudio2.h> // Audio
 
 #include "Config.h"
 
@@ -26,7 +25,6 @@ namespace Engine
 	struct RGB;
 	struct RGBA;
 	struct Vector2D;
-	struct UVector2D;
 	struct Pixel;
 	struct SuperChar;
 	struct Texture;
@@ -35,7 +33,6 @@ namespace Engine
 	struct Layer;
 	struct Camera;
 	struct Map;
-	struct AudioSource;
 	struct TimePoint;
 
 	extern std::vector<std::vector<unsigned char>> colliderTypes; /* Example:
@@ -77,11 +74,6 @@ namespace Engine
 	// Instead of allocating a string (that will be printed to the console) every print, it is kept for next prints.
 	extern std::string stringImage;
 
-	// (XAudio2) the global factory.
-	extern IXAudio2* xAudio2;
-	// (XAudio2) the global master voice.
-	extern IXAudio2MasteringVoice* masterVoice;
-
 	struct RGB
 	{
 		unsigned char r, g, b;
@@ -98,13 +90,13 @@ namespace Engine
 	struct Vector2D
 	{
 		int x, y;
-		Vector2D(int xAxis = 0, int yAxis = 0);
+		Vector2D(int x = 0, int y = 0);
 	};
 
 	struct UVector2D
 	{
 		unsigned int x, y;
-		UVector2D(unsigned int xAxis = 0, unsigned int yAxis = 0);
+		UVector2D(unsigned int x = 0, unsigned int y = 0);
 	};
 
 	struct Pixel
@@ -112,7 +104,7 @@ namespace Engine
 		char32_t character;
 		RGB frgb;
 		RGB brgb;
-		Pixel(char32_t character = ' ', RGB foreground = {0, 0, 0}, RGB background = { 0, 0, 0 });
+		Pixel(char32_t character = ' ', RGB foreRGB = {0, 0, 0}, RGB backRGB = { 0, 0, 0 });
 	};
 
 	struct SuperChar
@@ -120,37 +112,39 @@ namespace Engine
 		char32_t character;
 		RGBA frgba;
 		RGBA brgba;
-		SuperChar(char32_t character = ' ', RGBA foreground = {255, 255, 255, 1.0f}, RGBA background = {0, 0, 0, 0.0f});
+		SuperChar(char32_t character = ' ', RGBA foreRGBA = {255, 255, 255, 1.0f}, RGBA backRGBA = {0, 0, 0, 0.0f});
 	};
 
 	struct Texture
 	{
-		std::vector<std::vector<SuperChar>> t = {};
-		Vector2D pos = {0, 0};
 		bool active = true;
-		
-		// The constructors are functions instead of actual constructors because of my own preference.
-		// Visual Studio has a hard time correctly showing the parameters when filling them, so I decided that
-		// this is the best solution for making the writing experience easier.
-		
-		// A rectangle of the same value. (Limited to a single color and character)
-		void Block(UVector2D size, SuperChar value, Vector2D pos);
-		// Load from a file. (Requires file)
-		void File(std::string fileName, Vector2D pos);
-		// Create a texture by writing it. (Limited to a single color)
-		void Write(std::vector<std::string> stringVector, RGBA frgba, RGBA brgba, Vector2D pos);
+
+		std::vector<std::vector<SuperChar>> t;
+		Vector2D pos;
+
+		// LATER: Change() which instead of going through the whole process of creating a new texture to change the texture, easy function viola
+
+		// Block of the same character and color.
+		Texture(UVector2D size = {0, 0}, char defaultChar = ' ', RGBA frgba = {255, 255, 255, 1.0f}, RGBA brgba = {0, 0, 0, 0.0f}, Vector2D pos = {0, 0});
+		// Actual texture - 2D vector of SuperChar.
+		Texture(std::vector<std::vector<SuperChar>> texture, Vector2D pos = {0, 0});
+		// Load from a file.
+		Texture(std::string fileName, Vector2D pos = { 0, 0 });
+		// Easy to create texture using a string vector.
+		Texture(std::vector<std::string> stringVector, RGBA frgba, RGBA brgba, Vector2D pos = { 0, 0 });
 	};
 
 	struct Collider
 	{
+		Object* parentObject = NULL;
 		// A simple collider is a rectangle.
-		bool simple = true;
+		bool simple;
 		// Used if the collider is complex.
-		std::vector<std::vector<bool>> c = {};
+		std::vector<std::vector<bool>> c;
 		// Used by both simple and complex colliders.
-		Vector2D pos = { 0, 0 };
+		Vector2D pos;
 		// Used if the collider is simple.
-		UVector2D size = { 0, 0 };
+		UVector2D size;
 
 		// Turn the collider on/off.
 		bool active = true;
@@ -158,146 +152,94 @@ namespace Engine
 		unsigned char type = 0;
 
 		// For a simple collider
-		Collider(UVector2D size = {0, 0}, Vector2D pos = {0, 0});
+		Collider(UVector2D size = {1, 1}, Vector2D pos = {0, 0});
 		// For a complex collider
 		Collider(std::vector<std::vector<bool>> collider, Vector2D pos = { 0, 0 });
 	};
 
-	struct Object
+	class Object
 	{
+	public:
 		Layer* parentLayer = NULL; 
-
-		std::function<void()> OnTick = NULL;
 		
-		std::string name = "Unnamed Object";
-		Vector2D pos = { 0, 0 };
+		Object(Vector2D position = { 0, 0 }, std::string objectName = "Unnamed Object");
 
-		std::vector<Texture> textures = {};
-		std::vector<Collider> colliders = {};
+		std::function<void()> OnTick;
+		
+		std::string name;
+		Vector2D pos;
+
+		std::vector<Texture> textures;
+		std::vector<Collider> colliders;
+
+		// bool colliderActive = true;
+		// std::vector<std::vector<bool>> collider;
+		// int colliderType = 0;
 
 		Object* theOtherObject = NULL;
-		Vector2D lastPush = { 0, 0 };
+		Vector2D lastPush;
 		int theColliderIndex = -1;
 		int theOtherColliderIndex = -1;
 
 		// This event can be called after calling Move. OnPushed means that another object pushed this one.
-		std::function<void()> OnPushed = NULL;
+		std::function<void()> OnPushed;
 		// This event can be called after calling Move. OnPush means that this objects pushed another object.
-		std::function<void()> OnPush = NULL;
+		std::function<void()> OnPush;
 		// This event can be called after calling Move. OnBlocked means that another objects blocked this one.
-		std::function<void()> OnBlocked = NULL;
+		std::function<void()> OnBlocked;
 		// This event can be called after calling Move. OnBlock means that this object blocked another object.
-		std::function<void()> OnBlock = NULL;
+		std::function<void()> OnBlock;
+		
+		std::vector<long int> data; // user defined data, for sharing between classes and functions
 
 		bool Move(Vector2D dir);
 
 		bool CanMove(Vector2D dir, std::vector<Object*>* pushingObjects = nullptr, std::vector<Object*>* objectsToPush = nullptr, std::vector<Object*>* blockingObjectd = nullptr); // mostly engine used function (specifically block-moving)
-
-		Object(Vector2D position = {0U, 0U}, std::string objectName = "Unnamed Object");
 	};
 
-	struct Layer
+	class Layer
 	{
+	public:
 		bool active = true;
 
-		std::function<void()> OnTick = NULL;
+		std::function<void()> OnTick;
 
-		std::vector<Object*> objects = {};
+		std::vector<Object*> objects;
 		
 		RGBA frgba = { 0, 0, 0, 0.0f };
 		RGBA brgba = { 0, 0, 0, 0.0f };
-		float opacity = 1.0f;
+		float transparency = 1.0f;
 
 		int AddObject(Object* object);
 		bool RemoveObject(int index);
 		bool RemoveObject(std::string name);
 	};
 
-	struct AudioSource
+	class Camera
 	{
-		// The XAudio2 audio source.
-		IXAudio2SourceVoice* sourceVoice = nullptr;
+	public:
+		std::function<void()> OnTick;
+		std::string name;
+		Vector2D pos;
+		Vector2D res;
+		std::vector<std::vector<Pixel>> image;
 
-		// From XAudio2 library - information about the sound.
-		WAVEFORMATEX wfx = { 0 };
-		// From XAudio2 library - the buffer containing the audio data itself.
-		XAUDIO2_BUFFER buffer = { 0 };
-
-		HANDLE file = nullptr;
-
-		// Note that these variables don't do anything if changed, but can be used to access the data about the sound.
-
-		// The size of the .wav file itself (in bytes).
-		unsigned long fileSize = 0UL;
-		// The amount of channels used to play the sound.
-		unsigned channels = 0U;
-		// The sample rate (per second).
-		unsigned long sampleRate = 0UL;
-		// The byte rate (per second).
-		unsigned long byteRate = 0UL;
-		// I honestly don't know what this is.
-		unsigned blockAlign = 0U;
-		// The size of a sample (in... bits).
-		unsigned bitsPerSample = 0U;
-		// The size of the data within the file (in bytes).
-		unsigned long dataSize = 0UL;
-
-		// The audio in bytes after it was loaded.
-		unsigned char* data = nullptr;
-
-		// Load .wav file.
-		// volumes - list of volumes to set for the channels. nullptr = full volume.
-		// fileName - the name of the file.
-		// loopCount - times to loop the sound. 0/1 means no loop, plays once.
-		AudioSource(LPCWSTR fileName, std::vector<float> volumes = {});
-		
-		// Play the sound from the beginning.
-		// start - the start point in samples. 0 means the first sample.
-		// length - the length in samples . 0 means the entire sound.
-		void Play(unsigned long start = 0, unsigned long length = 0, unsigned short loops = 0);
-
-		// Pause playing the sound.
-		void Pause();
-
-		// Resume playing the sound.
-		void Resume();
-		
-		// Stop playing the sound.
-		void Stop();
-
-		// Change volume for all the channels.
-		// volume - between 0.0f to 1.0f that will be the volume of all the channels.
-		void ChangeVolume(float volume);
-
-		// Change volumes of every specific channel.
-		// volumes - a vector of floats between 0.0f to 1.0f, each element will be the volume of each corresponding channel.
-		void ChangeVolumes(std::vector<float> volumes = {});
-	};
-
-	struct Camera
-	{
-		std::function<void()> OnTick = NULL;
-		std::string name = "Unnamed Camera";
-		Vector2D pos = { 0, 0 };
-		UVector2D res = { 10U, 10U };
-		std::vector<std::vector<Pixel>> image = {};
-
-		Camera(Vector2D position, UVector2D resolution, std::string cameraName = "Unnamed Camera");
+		Camera(Vector2D position = Vector2D{ 0, 0 }, Vector2D resolution = { 10, 10 }, std::string cameraName = "Unnamed Camera");
 		
 		void Render(std::vector<Layer*> layers);
 		// This function will draw what was rendered (Camera::image's contents) into the "final" image (Engine::image), which will be printed at once with Engine::Print.
 		// pos is the position desired to draw the rendered image to the final image.
 		// left, top, right and bottom are a rectangle representing the area of the rendered image desired to draw to the final image.
 		// Setting right/bottom to 0 will default to the rendered image's size.
-		void Draw(Vector2D pos = {0, 0}, unsigned left = 0U, unsigned top = 0U, unsigned right = 0U, unsigned bottom = 0U);
+		void Draw(Vector2D pos = {0, 0}, unsigned short left = 0U, unsigned short top = 0U, unsigned short right = 0U, unsigned short bottom = 0U);
 	};
 	
-	struct Map
+	class Map
 	{
 	public:
-		std::function<void()> OnTick = NULL;
-		std::vector<Camera*> cameras = {};
-		std::vector<Layer*> layers = {};
+		std::function<void()> OnTick;
+		std::vector<Camera*> cameras;
+		std::vector<Layer*> layers;
 		int activeCameraI = -1;
 
 		int AddCamera(Camera* camera, bool asActiveCamera = false);
@@ -342,11 +284,14 @@ namespace Engine
 	// This is used by the engine when you load a map.
 	Layer* StoreLayer(Layer layer);
 
-	// Prepare the console for first usage or change it.
-	// If you set any of the parameters to 0, it will not change that thing about the console.
-	void InitializeConsole(unsigned fontX = 16U, unsigned fontY = 16U, unsigned columns = 20U, unsigned rows = 20U, std::wstring fontName = L"Consolas", std::wstring title = L"Dope KCGE Game");
-	// Prepare the audio library (XAudio2) for AudioSources.
-	void InitializeAudio();
+	/* Functions for custom game loop. */
+	// Prepare the console for first usage.
+	void InitializeConsole(unsigned short fontX = 16, unsigned short fontY = 16, unsigned short columns = 20, unsigned short rows = 20, const wchar_t* title = L"Dope KCGE Game");
+	// NOTE - THIS FUNCTION IS UNRELIABLE, GLITCHY, AND UNRECOMMENDED.
+	// Change the console's amount of columns and rows.
+	void ResizeConsole(unsigned short columns = 50, unsigned short rows = 30);
+	// Change the console's font size by pixels
+	void ResizeConsoleFont(unsigned short x = 16, unsigned short y = 16);
 	// Call OnKey functions according to key states.
 	void ManageInputs();
 	// Print the final image to the console.
@@ -356,4 +301,7 @@ namespace Engine
 	// Give this function a map and it will call all the OnKey functions of the layers, objects and cameras (map itself included) in the map.
 	// This way, you don't have to write the very long and ugly for loops to do so.
 	void CallOnTicks(Engine::Map* map);
+
+	// Default game loop
+	void GameLoop(unsigned int ticksPerSecond);
 };
