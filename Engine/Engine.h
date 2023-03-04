@@ -249,12 +249,12 @@ namespace Engine
 		// volumes - list of volumes to set for the channels. nullptr = full volume.
 		// fileName - the name of the file.
 		// loopCount - times to loop the sound. 0/1 means no loop, plays once.
-		AudioSource(LPCWSTR fileName, std::vector<float> volumes = {});
+		AudioSource(LPCWSTR fileName);
 		
 		// Play the sound from the beginning.
 		// start - the start point in samples. 0 means the first sample.
 		// length - the length in samples . 0 means the entire sound.
-		void Play(unsigned long start = 0, unsigned long length = 0, unsigned short loops = 0);
+		void Play(unsigned long start = 0, unsigned long length = 0, unsigned short loops = 0, std::vector<float> volumes = {});
 
 		// Pause playing the sound.
 		void Pause();

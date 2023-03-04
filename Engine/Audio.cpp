@@ -12,10 +12,13 @@ void Engine::InitializeAudio()
 	xAudio2->CreateMasteringVoice(&masterVoice);
 }
 
-Engine::AudioSource::AudioSource(LPCWSTR fileName, std::vector<float> volumes)
+Engine::AudioSource::AudioSource(LPCWSTR fileName)
 {
-	if (Engine::xAudio2 == nullptr || Engine::masterVoice == nullptr)
-		return;
+	if (Engine::xAudio2 == nullptr || Engine::masterVoice == nullptr) {
+		Engine::InitializeAudio();
+		if (Engine::xAudio2 == nullptr || Engine::masterVoice == nullptr)
+			return;
+	}
 
 	unsigned long temp = 0UL; // 4 bytes
 	unsigned temp2 = 0UL; // 2 bytes
@@ -79,20 +82,22 @@ Engine::AudioSource::AudioSource(LPCWSTR fileName, std::vector<float> volumes)
 	wfx.wBitsPerSample = bitsPerSample;
 	// Initialize the source voice.
 	Engine::xAudio2->CreateSourceVoice(&sourceVoice, &wfx);
-	// Change volumes
-	float* volumesArray = new float[channels];
-	for (unsigned int i = 0; i < channels; i++)
-		volumesArray[i] = i < volumes.size() ? volumes[i] : 1.0f;
-	sourceVoice->SetChannelVolumes(channels, volumesArray);
 }
  
-void Engine::AudioSource::Play(unsigned long start, unsigned long length, unsigned short loops)
+void Engine::AudioSource::Play(unsigned long start, unsigned long length, unsigned short loops, std::vector<float> volumes)
 {
 	// Return if didn't manage to initialize.
 	if (sourceVoice == nullptr)
 		return;
+	// Stop playing.
+	sourceVoice->Stop();
 	// Clean the current buffer, if exists or not.
 	sourceVoice->FlushSourceBuffers();
+	// Change volumes
+	float* volumesArray = new float[channels];
+	for (unsigned int i = 0; i < channels; i++)
+		volumesArray[i] = (i < volumes.size() ? volumes[i] : (volumes.size() > 0 ? volumes[volumes.size() - 1] : 1.0f));
+	sourceVoice->SetChannelVolumes(channels, volumesArray);
 	// If out of range (invalid) then play from start.
 	if (start > buffer.AudioBytes * 8 / bitsPerSample)
 		start = 0;
@@ -142,6 +147,6 @@ void Engine::AudioSource::ChangeVolumes(std::vector<float> volumes)
 {
 	float* volumesArray = new float[channels];
 	for (unsigned int i = 0; i < channels; i++) 
-		volumesArray[i] = i < volumes.size() ? volumes[i] : 1.0f;
+		volumesArray[i] = (i < volumes.size() ? volumes[i] : (volumes.size() > 0 ? volumes[volumes.size() - 1] : 1.0f));
 	sourceVoice->SetChannelVolumes(channels, volumesArray);
 }

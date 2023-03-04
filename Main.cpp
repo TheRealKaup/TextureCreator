@@ -1,14 +1,6 @@
 #include "Engine/Engine.h"
 #include "Engine/Widgets.h"
 
-/*
-TODO:
-
-Frame for color fields - generally make the TC prettier
-Background options (transparent grid) - to fix invisible brush
-The render of brush should be rendered through and not on top of canvas - to also fix invisible brush
-*/
-
 using namespace Engine;
 using namespace Widgets;
 
@@ -39,12 +31,19 @@ IntInputField* pif_brushSpeed; // 9
 IntInputField* pif_brushX; // 10
 IntInputField* pif_brushY; // 11
 Button* pb_resetBrushPos; // 12
-IntInputField* pif_background; // 13
+Button* pb_foreTool; // 13
+Button* pb_backTool; // 14
+Button* pb_charTool; // 15
+IntInputField* pif_background; // 16
 
 // Canvas
 Object* pcanvas;
 Object* pbrush;
 
+// Audio
+AudioSource as_canvasSize(L"assets\\canvasResize.wav");
+AudioSource as_widgetsMove(L"assets\\widgetsMove.wav");
+AudioSource as_draw(L"assets\\draw.wav");
 
 RGBA canvasSelected(255, 255, 255, 1.0f);
 RGBA canvasUnselected(100, 100, 100, 1.0f);
@@ -112,10 +111,10 @@ void ChangeCanvasBackground()
 	}
 }
 
-void ResizeCanvas()
+void ResizeCanvas(bool calledFromMain = false) // if called from main then don't play SFX
 {
 	// Textures
-
+	
 	unsigned int sizeX = (unsigned int)pif_canvasX->number;
 	unsigned int sizeY = (unsigned int)pif_canvasY->number;
 
@@ -142,6 +141,10 @@ void ResizeCanvas()
 				pcanvas->textures[0].t[y][x].brgba = { 205, 205, 205, 1.0f };
 		}
 	}
+	
+	// If the size isn't changed then don't proceed. (Unless it is the first call)
+	if (pcanvas->textures[5].t.size() == sizeY && pcanvas->textures[5].t[0].size() == sizeX && !calledFromMain)
+		return;
 
 	// Top frame
 	pcanvas->textures[1].Block({ sizeX, 1 }, Engine::SuperChar('-', canvasUnselected, { 0, 0, 0, 0.0f }), { 1, 0 });
@@ -191,6 +194,10 @@ void ResizeCanvas()
 	pcanvas->colliders[3].simple = true;
 	pcanvas->colliders[3].size = { 1, sizeY + 2 };
 	pcanvas->colliders[3].type = 3;
+
+	// Play sound effect.
+	if (!calledFromMain)
+		as_canvasSize.Play(0, 0, 0, { 0.5f, 0.5f });
 }
 
 void MoveBrushSlow(unsigned char dir)
@@ -251,9 +258,17 @@ void DrawToCanvas()
 			if (fx < 0 || fx >= pcanvas->textures[5].t[0].size())
 				continue;
 
-			pcanvas->textures[5].t[fy][fx] = pbrush->textures[0].t[y][x];
+			if (pb_foreTool->notRGBA.r == 150U)
+				pcanvas->textures[5].t[fy][fx].frgba = pbrush->textures[0].t[y][x].frgba;
+			if (pb_backTool->notRGBA.r == 150U)
+				pcanvas->textures[5].t[fy][fx].brgba = pbrush->textures[0].t[y][x].brgba;
+			if (pb_charTool->notRGBA.r == 150U)
+				pcanvas->textures[5].t[fy][fx].character = pbrush->textures[0].t[y][x].character;
 		}
 	}
+
+	// Play sound effect.
+	as_draw.Play();
 }
 
 void UpdateBrush()
@@ -346,7 +361,7 @@ void Import()
 	pif_canvasX->ChangeValue(std::to_string(maxX));
 	pif_canvasY->ChangeValue(std::to_string(y));
 
-	ResizeCanvas();
+	ResizeCanvas(true);
 }
 
 void Export()
@@ -384,12 +399,16 @@ void ResetBrushPos()
 	pbrush->pos = { canvasPos.x + 1, canvasPos.y + 1 };
 }
 
+void SwitchButton(Button* button) {
+	if (button->notRGBA.r != 150)
+		button->notRGBA = { 150, 150, 150, 1.0f };
+	else
+		button->notRGBA = { 75, 75, 75, 1.0f };
+}
+
 
 void StateMachine(unsigned char dir) // 0 = up, 1 = left, 2 = down, 3 = right
 {
-	// FIRST TRY BABY IM TIRED AS SHIT YEAHHHH
-	// nvm i'm completely changing this
-
 	/* upper:
 	pb_exit; // 0
 	pb_import; // 1
@@ -413,10 +432,11 @@ void StateMachine(unsigned char dir) // 0 = up, 1 = left, 2 = down, 3 = right
 	pif_brushX; // 10
 	pif_brushY; // 11
 	pb_resetBrushPos // 12
-	pif_background // 13
+	pb_foreTool; // 13
+	pb_backTool; // 14
+	pb_charTool; // 15
+	pif_background // 16
 	*/
-
-	// Can't use 'else' because visual studio is broken
 
 	// Canvas
 	if (sectionState == 0)
@@ -470,12 +490,19 @@ void StateMachine(unsigned char dir) // 0 = up, 1 = left, 2 = down, 3 = right
 			else if (sideState == 12)
 				pb_resetBrushPos->Select();
 			else if (sideState == 13)
+				pb_foreTool->Select();
+			else if (sideState == 14)
+				pb_backTool->Select();
+			else if (sideState == 15)
+				pb_charTool->Select();
+			else if (sideState == 16)
 				pif_background->Select();
+
 			sectionState = 2;
 		}
 	}
 	// Upper
-	if (sectionState == 1)
+	else if (sectionState == 1)
 	{
 		// Move left
 		if (dir == 1)
@@ -561,7 +588,7 @@ void StateMachine(unsigned char dir) // 0 = up, 1 = left, 2 = down, 3 = right
 		}
 	}
 	// Side
-	if (sectionState == 2)
+	else if (sectionState == 2)
 	{
 		// Move up
 		if (dir == 0)
@@ -628,8 +655,23 @@ void StateMachine(unsigned char dir) // 0 = up, 1 = left, 2 = down, 3 = right
 			}
 			else if (sideState == 13)
 			{
-				pif_background->Deselect();
+				pb_foreTool->Deselect();
 				pb_resetBrushPos->Select();
+			}
+			else if (sideState == 14)
+			{
+				pb_backTool->Deselect();
+				pb_foreTool->Select();
+			}
+			else if (sideState == 15)
+			{
+				pb_charTool->Deselect();
+				pb_backTool->Select();
+			}
+			else if (sideState == 16)
+			{
+				pif_background->Deselect();
+				pb_charTool->Select();
 			}
 			else
 				return;
@@ -702,6 +744,21 @@ void StateMachine(unsigned char dir) // 0 = up, 1 = left, 2 = down, 3 = right
 			else if (sideState == 12)
 			{
 				pb_resetBrushPos->Deselect();
+				pb_foreTool->Select();
+			}
+			else if (sideState == 13)
+			{
+				pb_foreTool->Deselect();
+				pb_backTool->Select();
+			}
+			else if (sideState == 14)
+			{
+				pb_backTool->Deselect();
+				pb_charTool->Select();
+			}
+			else if (sideState == 15)
+			{
+				pb_charTool->Deselect();
 				pif_background->Select();
 			}
 			else
@@ -739,16 +796,30 @@ void StateMachine(unsigned char dir) // 0 = up, 1 = left, 2 = down, 3 = right
 			else if (sideState == 12)
 				pb_resetBrushPos->Deselect();
 			else if (sideState == 13)
+				pb_foreTool->Deselect();
+			else if (sideState == 14)
+				pb_backTool->Deselect();
+			else if (sideState == 15)
+				pb_charTool->Deselect();
+			else if (sideState == 16)
 				pif_background->Deselect();
 			SelectCanvas();
 			sectionState = 0;
 		}
 	}
+	else
+		return;
+	
+	// If reached this point then did move between widgets.
+	// Play sound effect.
+	as_widgetsMove.Play(0, 0, 0, { 0.15f, 0.15f });
 }
 
 
 int main()
 {
+	InitializeAudio();
+
 	// To prevent the brush from exiting the canvas
 	colliderTypes = {
 		{2, 2, 0, 0},
@@ -762,7 +833,7 @@ int main()
 	Map map;
 	Layer layer;
 	Layer backlayer;
-	Camera camera({ 0, 0 }, { 95, 39 });
+	Camera camera({ 0, 0 }, { 95, 42 });
 	map.AddLayer(&backlayer);
 	map.AddLayer(&layer);
 	map.AddCamera(&camera, true);
@@ -805,9 +876,12 @@ int main()
 		"|         |",
 		"|         |",
 		"|         |",
+		"|         |",
+		"|         |",
+		"|         |",
 		"#---------#"
 		}, { 150 ,150, 150, 1.0f }, { 0, 0, 0, 0.0f }, { 2, 26 });
-	frame.textures[6].File("backgroundSelectorFrame.kcget", { 2, 37 }); // background selector options
+	frame.textures[6].File("assets\\backgroundSelectorFrame.kcget", { 2, 40 }); // background selector options
 	layer.AddObject(&frame);
 
 
@@ -817,7 +891,7 @@ int main()
 	Button b_export(&layer, Export, NULL, VK_RETURN, { 54, 2 }, "Export"); // export
 	IntInputField if_canvasX(&layer, NULL, 1, 78, "16", { 63, 2 }, "CanvasX="); // canvas size x
 	IntInputField if_canvasY(&layer, NULL, 1, 30, "16", { 74, 2 }, "CanvasY="); // canvas size y
-	Button b_confirmSize(&layer, ResizeCanvas, NULL, VK_RETURN, { 85, 2 }, "Confirm"); // conifm
+	Button b_confirmSize(&layer, std::bind(ResizeCanvas, false), NULL, VK_RETURN, { 85, 2 }, "Confirm"); // conifm
 	pb_exit = &b_exit;
 	pb_import = &b_import;
 	pb_export = &b_export;
@@ -850,9 +924,15 @@ int main()
 	if_brushX.obj.textures[2].active = false;
 	IntInputField if_brushY(&layer, UpdateBrush, 1, 9, "1", { 2, 29 }, "BrushY="); // brush size y
 	if_brushY.obj.textures[2].active = false;
-	Button b_resetBrushPos(&layer, ResetBrushPos, NULL, VK_RETURN, { 2, 30 }, "Reset Pos");
+	Button b_resetBrushPos(&layer, ResetBrushPos, NULL, VK_RETURN, { 2, 30 }, "Reset Pos"); // reset brush pos
 	b_resetBrushPos.obj.textures[1].active = false;
-	IntInputField if_background(&layer, ChangeCanvasBackground, 1, 3, "1", { 2, 34 }, "Back=");
+	Button b_foreTool(&layer, NULL, NULL, VK_RETURN, { 2, 31 }, "Fore Tool");
+	b_foreTool.obj.textures[1].active = false;
+	Button b_backTool(&layer, NULL, NULL, VK_RETURN, { 2, 32 }, "Back Tool");
+	b_backTool.obj.textures[1].active = false;
+	Button b_charTool(&layer, NULL, NULL, VK_RETURN, { 2, 33 }, "Char Tool");
+	b_charTool.obj.textures[1].active = false;
+	IntInputField if_background(&layer, ChangeCanvasBackground, 1, 3, "1", { 2, 37 }, "Back="); // canvas background
 	pif_fr = &if_fr;
 	pif_fg = &if_fg;
 	pif_fb = &if_fb;
@@ -866,6 +946,12 @@ int main()
 	pif_brushX = &if_brushX;
 	pif_brushY = &if_brushY;
 	pb_resetBrushPos = &b_resetBrushPos;
+	pb_foreTool = &b_foreTool;
+	b_foreTool.OnDown = std::bind(SwitchButton, pb_foreTool);
+	pb_backTool = &b_backTool;
+	b_backTool.OnDown = std::bind(SwitchButton, pb_backTool);
+	pb_charTool = &b_charTool;
+	b_charTool.OnDown = std::bind(SwitchButton, pb_charTool);
 	pif_background = &if_background;
 
 
@@ -874,7 +960,7 @@ int main()
 	canvas.textures.resize(6);
 	canvas.colliders.resize(4);
 	pcanvas = &canvas;
-	ResizeCanvas();
+	ResizeCanvas(true);
 	SelectCanvas();
 	backlayer.AddObject(&canvas);
 
@@ -901,7 +987,7 @@ int main()
 	RegisterInputHandler(VK_RETURN, true, DrawToCanvas, true);
 
 	// Engine
-	InitializeConsole(16, 16, 95, 39, L"KCGETC");
+	InitializeConsole(16, 16, 95, 42, L"KCGETC");
 	for (tps = 60; running; thisTickStartTP.SetToNow(), totalTicks++)
 	{
 		ManageInputs();

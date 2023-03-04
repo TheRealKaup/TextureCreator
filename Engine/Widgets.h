@@ -27,6 +27,10 @@ namespace Widgets
 		{
 			if (selected)
 			{
+				down = true;
+				if (OnDown)
+					OnDown();
+
 				for (size_t i = 0; i < obj.textures.size(); i++)
 				{
 					for (size_t y = 0; y < obj.textures[i].t.size(); y++)
@@ -35,10 +39,6 @@ namespace Widgets
 							obj.textures[i].t[y][x].frgba = downRGBA;
 					}
 				}
-
-				down = true;
-				if (OnDown)
-					OnDown();
 			}
 		}
 
@@ -46,6 +46,10 @@ namespace Widgets
 		{
 			if (selected)
 			{
+				down = false;
+				if (OnUp)
+					OnUp();
+
 				for (size_t i = 0; i < obj.textures.size(); i++)
 				{
 					for (size_t y = 0; y < obj.textures[i].t.size(); y++)
@@ -54,10 +58,6 @@ namespace Widgets
 							obj.textures[i].t[y][x].frgba = selectedRGBA;
 					}
 				}
-
-				down = false;
-				if (OnUp)
-					OnUp();
 			}
 		}
 
