@@ -34,7 +34,8 @@ Button* pb_resetBrushPos; // 12
 Button* pb_foreTool; // 13
 Button* pb_backTool; // 14
 Button* pb_charTool; // 15
-IntInputField* pif_background; // 16
+IntInputField* pif_fontSize; // 16
+IntInputField* pif_background; // 17
 
 // Canvas
 Object* pcanvas;
@@ -406,6 +407,10 @@ void SwitchButton(Button* button) {
 		button->notRGBA = { 75, 75, 75, 1.0f };
 }
 
+void ChangeFontSize() {
+	InitializeConsole(pif_fontSize->number, pif_fontSize->number, 0, 0, L"", L"");
+}
+
 
 void StateMachine(unsigned char dir) // 0 = up, 1 = left, 2 = down, 3 = right
 {
@@ -418,25 +423,24 @@ void StateMachine(unsigned char dir) // 0 = up, 1 = left, 2 = down, 3 = right
 	pb_confirmSize; // 5
 	*/
 
-	/* side:
-	pif_fr; // 0
-	pif_fg; // 1
-	pif_fb; // 2
-	pif_fa; // 3
-	pif_br; // 4
-	pif_bg; // 5
-	pif_bb; // 6
-	pif_ba; // 7
-	psf_char; // 8
-	pif_brushSpeed; // 9
-	pif_brushX; // 10
-	pif_brushY; // 11
-	pb_resetBrushPos // 12
-	pb_foreTool; // 13
-	pb_backTool; // 14
-	pb_charTool; // 15
-	pif_background // 16
-	*/
+	// pif_fr; // 0
+	// pif_fg; // 1
+	// pif_fb; // 2
+	// pif_fa; // 3
+	// pif_br; // 4
+	// pif_bg; // 5
+	// pif_bb; // 6
+	// pif_ba; // 7
+	// psf_char; // 8
+	// pif_brushSpeed; // 9
+	// pif_brushX; // 10
+	// pif_brushY; // 11
+	// pb_resetBrushPos // 12
+	// pb_foreTool; // 13
+	// pb_backTool; // 14
+	// pb_charTool; // 15
+	// pif_fontSize; // 16
+	// pif_background // 17
 
 	// Canvas
 	if (sectionState == 0)
@@ -496,6 +500,8 @@ void StateMachine(unsigned char dir) // 0 = up, 1 = left, 2 = down, 3 = right
 			else if (sideState == 15)
 				pb_charTool->Select();
 			else if (sideState == 16)
+				pif_fontSize->Select();
+			else if (sideState == 17)
 				pif_background->Select();
 
 			sectionState = 2;
@@ -670,8 +676,13 @@ void StateMachine(unsigned char dir) // 0 = up, 1 = left, 2 = down, 3 = right
 			}
 			else if (sideState == 16)
 			{
-				pif_background->Deselect();
+				pif_fontSize->Deselect();
 				pb_charTool->Select();
+			}
+			else if (sideState == 17)
+			{
+				pif_background->Deselect();
+				pif_fontSize->Select();
 			}
 			else
 				return;
@@ -759,6 +770,11 @@ void StateMachine(unsigned char dir) // 0 = up, 1 = left, 2 = down, 3 = right
 			else if (sideState == 15)
 			{
 				pb_charTool->Deselect();
+				pif_fontSize->Select();
+			}
+			else if (sideState == 16)
+			{
+				pif_fontSize->Deselect();
 				pif_background->Select();
 			}
 			else
@@ -802,6 +818,8 @@ void StateMachine(unsigned char dir) // 0 = up, 1 = left, 2 = down, 3 = right
 			else if (sideState == 15)
 				pb_charTool->Deselect();
 			else if (sideState == 16)
+				pif_fontSize->Deselect();
+			else if (sideState == 17)
 				pif_background->Deselect();
 			SelectCanvas();
 			sectionState = 0;
@@ -833,7 +851,7 @@ int main()
 	Map map;
 	Layer layer;
 	Layer backlayer;
-	Camera camera({ 0, 0 }, { 95, 42 });
+	Camera camera({ 0, 0 }, { 95, 43 });
 	map.AddLayer(&backlayer);
 	map.AddLayer(&layer);
 	map.AddCamera(&camera, true);
@@ -879,9 +897,10 @@ int main()
 		"|         |",
 		"|         |",
 		"|         |",
+		"|         |",
 		"#---------#"
 		}, { 150 ,150, 150, 1.0f }, { 0, 0, 0, 0.0f }, { 2, 26 });
-	frame.textures[6].File("assets\\backgroundSelectorFrame.kcget", { 2, 40 }); // background selector options
+	frame.textures[6].File("assets\\backgroundSelectorFrame.kcget", { 2, 41 }); // background selector options
 	layer.AddObject(&frame);
 
 
@@ -890,7 +909,7 @@ int main()
 	Button b_import(&layer, Import, NULL, VK_RETURN, { 45, 2 }, "Import"); // import
 	Button b_export(&layer, Export, NULL, VK_RETURN, { 54, 2 }, "Export"); // export
 	IntInputField if_canvasX(&layer, NULL, 1, 78, "16", { 63, 2 }, "CanvasX="); // canvas size x
-	IntInputField if_canvasY(&layer, NULL, 1, 30, "16", { 74, 2 }, "CanvasY="); // canvas size y
+	IntInputField if_canvasY(&layer, NULL, 1, 33, "16", { 74, 2 }, "CanvasY="); // canvas size y
 	Button b_confirmSize(&layer, std::bind(ResizeCanvas, false), NULL, VK_RETURN, { 85, 2 }, "Confirm"); // conifm
 	pb_exit = &b_exit;
 	pb_import = &b_import;
@@ -932,7 +951,9 @@ int main()
 	b_backTool.obj.textures[1].active = false;
 	Button b_charTool(&layer, NULL, NULL, VK_RETURN, { 2, 33 }, "Char Tool");
 	b_charTool.obj.textures[1].active = false;
-	IntInputField if_background(&layer, ChangeCanvasBackground, 1, 3, "1", { 2, 37 }, "Back="); // canvas background
+	IntInputField if_fontSize(&layer, ChangeFontSize, 10, 99, "12", { 2, 34 }, "Font="); // font size x and y
+	if_fontSize.obj.textures[2].active = false;
+	IntInputField if_background(&layer, ChangeCanvasBackground, 1, 3, "1", { 2, 38 }, "Back="); // canvas background
 	pif_fr = &if_fr;
 	pif_fg = &if_fg;
 	pif_fb = &if_fb;
@@ -952,6 +973,7 @@ int main()
 	b_backTool.OnDown = std::bind(SwitchButton, pb_backTool);
 	pb_charTool = &b_charTool;
 	b_charTool.OnDown = std::bind(SwitchButton, pb_charTool);
+	pif_fontSize = &if_fontSize;
 	pif_background = &if_background;
 
 
@@ -987,7 +1009,7 @@ int main()
 	RegisterInputHandler(VK_RETURN, true, DrawToCanvas, true);
 
 	// Engine
-	InitializeConsole(16, 16, 95, 42, L"KCGETC");
+	InitializeConsole(pif_fontSize->number, pif_fontSize->number, 95, 43, L"Cascida", L"KCGETC");
 	for (tps = 60; running; thisTickStartTP.SetToNow(), totalTicks++)
 	{
 		ManageInputs();
