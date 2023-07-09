@@ -1,6 +1,6 @@
 ﻿#include "engine.hpp"
 
-// ---=== Variables ===---;
+// ---=== Variables ===---
 
 winsize Engine::terminalSize;
 std::vector<std::vector<Engine::Cell>> Engine::image;

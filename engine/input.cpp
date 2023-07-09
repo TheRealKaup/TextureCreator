@@ -7,38 +7,21 @@ size_t Engine::Input::handlerIndex = -1;
 
 std::string Engine::Input::input(maxInputLength, '\0');
 
-void Engine::Input::Handler::AddCall(std::function<void()> call, bool onTick)
+Engine::Input::Handler::Handler(const std::string& input, std::function<void()> callback, bool onTick) : input(input)
 {
-	onTicks.push_back(onTick);
-	calls.push_back(call);
-}
-Engine::Input::Handler::Handler(const std::string& input, std::function<void()> call, bool onTick) : input(input)
-{
-	onTicks.push_back(onTick);
-	calls.push_back(call);
+	callbacks.push_back({callback, onTick});
 }
 
-void Engine::Input::RegisterHandler(const std::string& input, std::function<void()> call, bool onTick)
+void Engine::Input::RegisterHandler(const std::string& input, std::function<void()> callback, bool onTick)
 {
 	// If a handler already exists for this input, add the call to the calls vector
 	for (size_t i = 0; i < handlers.size(); i++)
 		if (handlers[i].input == input)
 		{
-			handlers[i].AddCall(call, onTick);
+			handlers[i].callbacks.push_back({callback, onTick});
 			return;
 		}
-	handlers.push_back(Handler(input, call, onTick));
-}
-void Engine::Input::RegisterHandler(char input, std::function<void()> call, bool onTick)
-{
-	// If a handler already exists for this input, add the call to the calls vector
-	for (size_t i = 0; i < handlers.size(); i++)
-		if (handlers[i].input.length() == 1 && handlers[i].input[0] == input)
-		{
-			handlers[i].AddCall(call, onTick);
-			return;
-		}
-	handlers.push_back(Handler({input}, call, onTick));
+	handlers.push_back(Handler(input, callback, onTick));
 }
 
 uint32_t Engine::Input::Call()
@@ -48,13 +31,13 @@ uint32_t Engine::Input::Call()
 	{
 		if (handlers[i].timesPressed > 0)
 		{
-			for (size_t j = 0; j < handlers[i].calls.size(); j++)
+			for (size_t j = 0; j < handlers[i].callbacks.size(); j++)
 			{
-				if (handlers[i].onTicks[j] && handlers[i].calls[j])
+				if (handlers[i].callbacks[j].onTick && handlers[i].callbacks[j].callback)
 				{
 					counter++;
 					input = handlers[i].input;
-					handlers[i].calls[j]();
+					handlers[i].callbacks[j].callback();
 				}
 			}
 			handlers[i].timesPressed = 0;
@@ -63,7 +46,7 @@ uint32_t Engine::Input::Call()
 	return counter;
 }
 
-std::string Engine::Input::Get()
+std::string& Engine::Input::Get()
 {
 	static char* buf = new char[maxInputLength];
 
@@ -73,6 +56,7 @@ std::string Engine::Input::Get()
 	// Read to buffer (blocking)
 	read(0, buf, maxInputLength);
 
+	// Update `std::string Input::input`
 	input.assign(buf);
 
 	// Call handlers
@@ -81,13 +65,13 @@ std::string Engine::Input::Get()
 		if (input == handlers[i].input) // If the strings are equal
 		{
 			handlers[i].timesPressed++;
-			for (size_t j = 0; j < handlers[i].calls.size(); j++) // Call the calls
-				if (!handlers[i].onTicks[j] && handlers[i].calls[j]) // Check if the call shouldn't be called on tick and isn't null
-					handlers[i].calls[j](); // Call
+			for (size_t j = 0; j < handlers[i].callbacks.size(); j++) // Call the calls
+				if (!handlers[i].callbacks[j].onTick && handlers[i].callbacks[j].callback) // Check if the call shouldn't be called on tick and isn't null
+					handlers[i].callbacks[j].callback(); // Call
 			break;
 		}
 	}
-	
+
 	return input;
 }
 
@@ -112,7 +96,7 @@ bool Engine::Input::IsNum()
 	return (input[0] >= '0') && (input[0] <= '9') && (input.length() == 1);
 }
 
-unsigned char Engine::Input::Num()
+uint8_t Engine::Input::Num()
 {
 	return input[0] - '0';
 }

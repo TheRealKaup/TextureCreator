@@ -1,10 +1,10 @@
 /*
 
-	  || /   ----  ----  ----
-	 |||/\   |     |  _  |--
-	||||  \  \___  \__/  \___  kaup's console game engine
-	
-	Docs will be available at https://www.kaup.dev/kcge. Capybaright � 2021-2022 Kaup. All rights reserved.
+	  |  /  ----- ----- ----- -   -  
+	 || /\    |   |---  |     |---| 
+	|||/  \   |   \____ \____ |   |  kaup's terminal game engine
+
+	Tutorials and references are available at https://github.com/TheRealKaup/KTech in `tutorials.md` and `references.md` respectively. Capybaright � 2021-2023 Kaup. All rights reserved.
 
 */
 
@@ -27,8 +27,6 @@
 // Cross-platform libraries
 #include <portaudio.h> // PortAudio is a cross-platform audio library
 
-#include "config.hpp" // macros
-
 namespace Engine
 {
 	struct RGB;
@@ -44,6 +42,7 @@ namespace Engine
 	struct Camera;
 	struct Map;
 	struct AudioSource;
+	struct TimePoint;
 
 	inline bool running = true;
 
@@ -62,14 +61,17 @@ namespace Engine
 	// Keyboard input; input handlers, input loop...
 	namespace Input
 	{	
+		struct HandlerCallback
+		{
+			std::function<void()> callback;
+			bool onTick;
+		};
+
 		struct Handler
 		{
 			std::string input;
-			std::vector<std::function<void()>> calls;
-			std::vector<bool> onTicks;
+			std::vector<HandlerCallback> callbacks;
 			uint8_t timesPressed = 0;
-
-			void AddCall(std::function<void()> call, bool onTick);
 
 			Handler(const std::string& input, std::function<void()> call, bool onTick);
 		};
@@ -90,11 +92,10 @@ namespace Engine
 		// which in the case of the `Arrow Up` key, it's `"\033[A"`.
 		// Since it is hard to remember all of the escape codes, I have made for you some macros in `config.hpp`, such as `kUp` and `F3`
 		// `onTick` - False: calls the moment input is received. True: stores the input and calls once per tick, at the start of the tick.
-		void RegisterHandler(const std::string& stringKey, std::function<void()> call, bool onTick = false);
-		void RegisterHandler(char charKey, std::function<void()> callback, bool onTick = false);
+		void RegisterHandler(const std::string& stringKey, std::function<void()> callback, bool onTick = false);
 		// Get inputs (and calls registered input handler accordingly).
 		// Returns the input (also updates Engine::Input::buf).
-		std::string Get();
+		std::string& Get();
 		// Call this function in order to call all handlers who got their input received since the last time you called this function.
 		// This function also resets all `Engine::Input::handlers[].timesPressed`.
 		// Returns the amount of calls.
@@ -117,7 +118,7 @@ namespace Engine
 		// Returns true if the last input is a number
 		bool IsNum();
 		// Returns the last value as a number
-		unsigned char Num();
+		uint8_t Num();
 	}
 
 	// Time management; invocations, tps, fps...
@@ -252,19 +253,19 @@ namespace Engine
 
 		// [Simple] Create a rectangle of the same value (limited to a single CellA value).
 		void Simple(UPoint size, CellA value, Point position);
-		// [Complex]
-		void Rectangle(UPoint size, CellA value, Point position);
+		// [Complex] Create a rectangle.
+		void Rectangle(UPoint size, CellA value, Point position);// Load from a file.
 		// [Complex] Load from a file.
 		bool File(const std::string& fileName, Point position);
 		// [Complex] Create a texture by writing it (limited to single foreground and background RGBA values)
 		void Write(const std::vector<std::string>& stringVector, RGBA frgba, RGBA brgba, Point position);
 		// Change all the cells' values
 		void SetCell(CellA value);
-		// Chagne all the cells' foreground color values
+		// Change all the cells' foreground color values
 		void SetForeground(RGBA value);
-		// Chagne all the cells' background color values
+		// Change all the cells' background color values
 		void SetBackground(RGBA value);
-		// Chagne all the cells' character values
+		// Change all the cells' character values
 		void SetCharacter(char value);
 	};
 

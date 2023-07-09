@@ -2,6 +2,9 @@
 
 struct Canvas : public Widget
 {
+	Engine::UPoint size;
+	uint8_t backgroundType;
+
 	Engine::Object brush;
 
 	Engine::AudioSource as_canvasSize;
@@ -9,10 +12,6 @@ struct Canvas : public Widget
 
 	Engine::RGBA selectedRGBA = Engine::RGBA(255, 255, 255, 255);
 	Engine::RGBA unselectedRGBA = Engine::RGBA(150, 150, 150, 255);
-
-	Engine::UPoint size;
-
-	int brushSpeed = 0;
 
 	void Select()
 	{
@@ -30,6 +29,8 @@ struct Canvas : public Widget
 
 	void ChangeBackground(uint8_t type)
 	{
+		backgroundType = type;
+
 		if (type == 1)
 		{
 			for (size_t y = 0; y < obj.textures[0].t.size(); y++)
@@ -62,8 +63,10 @@ struct Canvas : public Widget
 		}
 	}
 
-	void Resize(bool calledFromMain, Engine::UPoint size, uint8_t backgroundType)
+	void Resize(Engine::UPoint _size)
 	{
+		size = _size;
+
 		// Textures
 
 		uint32_t sizeX = size.x;
@@ -94,7 +97,7 @@ struct Canvas : public Widget
 		}
 		
 		// If the size isn't changed then don't proceed. (Unless it is the first call)
-		if (obj.textures[5].t.size() == sizeY && obj.textures[5].t[0].size() == sizeX && !calledFromMain)
+		if (obj.textures[5].t.size() == sizeY && obj.textures[5].t[0].size() == sizeX)
 			return;
 
 		// Top frame
@@ -147,24 +150,7 @@ struct Canvas : public Widget
 		obj.colliders[3].type = 3;
 
 		// Play sound effect.
-		if (!calledFromMain)
-			as_canvasSize.Play(0, 0, 0, 0.5f);
-	}
-
-	void MoveBrush()
-	{
-		// Only move if canvas is selected
-		if (!selected)
-			return;
-
-		if (Engine::Input::Is('w')) // up
-			obj.textures[10].pos.y--;
-		else if (Engine::Input::Is('a')) // left
-			obj.textures[10].pos.x--;
-		else if (Engine::Input::Is('s')) // down
-			obj.textures[10].pos.y++;
-		else // right
-			obj.textures[10].pos.x++;
+		as_canvasSize.Play(0, 0, 0, 0.5f);
 	}
 
 	void Draw(bool fore, bool back, bool character)
@@ -281,7 +267,7 @@ struct Canvas : public Widget
 		size.x = maxX;
 		size.y = y;
 
-		Resize(true, size, 1);
+		Resize(size);
 	}
 
 	void Export()
@@ -314,14 +300,44 @@ struct Canvas : public Widget
 		outFile.write(out.c_str(), out.length());
 	}
 
-	void ResetBrushPos()
+	void MoveBrush()
 	{
-		brush.pos = { obj.pos.x + 1, obj.pos.y + 1 };
+		// Only move if canvas is selected
+		if (!selected)
+			return;
+
+		if (Engine::Input::Is('w')) // up
+		{
+			if (obj.textures[10].pos.y + obj.textures[10].size.y > 2)
+				obj.textures[10].pos.y--;
+		}
+		else if (Engine::Input::Is('a')) // left
+		{
+			if (obj.textures[10].pos.x + obj.textures[10].size.x > 2)
+				obj.textures[10].pos.x--;
+		}
+		else if (Engine::Input::Is('s')) // down
+		{
+			// Not casting to `int32_t` will make the brush stuck when the position is negative.
+			if (obj.textures[10].pos.y < (int32_t)obj.textures[0].t.size())
+				obj.textures[10].pos.y++;
+		}
+		else // right
+		{
+			if (obj.textures[10].pos.x < (int32_t)obj.textures[0].t[0].size())
+				obj.textures[10].pos.x++;
+		}
 	}
 
-	Canvas(Engine::UPoint size, Engine::Point pos, uint8_t backgroundType, Engine::UPoint brushSize, Engine::CellA brushValue, Engine::Layer* layer)
+	void ResetBrushPos()
+	{
+		brush.pos = Engine::Point( obj.pos.x + 1, obj.pos.y + 1 );
+	}
+
+	Canvas(Engine::UPoint _size, Engine::Point pos, uint8_t backgroundType, Engine::UPoint brushSize, Engine::CellA brushValue, Engine::Layer* layer)
 	{
 		obj.pos = pos;
+		size = _size;
 
 		// Canvas textures
 		obj.textures.resize(11);
@@ -371,9 +387,9 @@ struct Canvas : public Widget
 
 		// Input handlers
 		// Engine::Input::RegisterHandler(kReturn, std::bind(&Canvas::Draw, this, true, true, true), true);
-		Engine::Input::RegisterHandler('w', std::bind(&Canvas::MoveBrush, this), true);
-		Engine::Input::RegisterHandler('a', std::bind(&Canvas::MoveBrush, this), true);
-		Engine::Input::RegisterHandler('s', std::bind(&Canvas::MoveBrush, this), true);
-		Engine::Input::RegisterHandler('d', std::bind(&Canvas::MoveBrush, this), true);
+		Engine::Input::RegisterHandler("w", std::bind(&Canvas::MoveBrush, this), true);
+		Engine::Input::RegisterHandler("a", std::bind(&Canvas::MoveBrush, this), true);
+		Engine::Input::RegisterHandler("s", std::bind(&Canvas::MoveBrush, this), true);
+		Engine::Input::RegisterHandler("d", std::bind(&Canvas::MoveBrush, this), true);
 	}
 };

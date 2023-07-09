@@ -3,6 +3,7 @@
 #include "widgets/canvas.hpp"
 #include "widgets/intinputfield.hpp"
 #include "widgets/stringinputfield.hpp"
+#include "widgets/switch.hpp"
 
 #define displaySizeX 101
 #define displaySizeY 39
@@ -41,6 +42,7 @@ namespace UI
 	AudioSource widgetSelectionSFX;
 
 	// Widgets
+	Canvas* canvas;
 	Widget* topSection[6];
 	// 0 - (Button) Exit
 	// 1 - (Button) Import
@@ -65,7 +67,6 @@ namespace UI
 	// 13 - (Switch) Background switch
 	// 14 - (Switch) Character switch
 	// 15 - (Int field) Canvas background
-	Canvas* canvas;
 
 	// Frames
 	Object mainFrame;
@@ -73,6 +74,11 @@ namespace UI
 	Object backgroundFrame;
 	Object settingsFrame;
 	Object backgroundSelectorFrame;
+
+	void ResizeCanvas()
+	{
+		canvas->Resize(Engine::UPoint(((IntInputField*)topSection[3])->number, ((IntInputField*)topSection[4])->number));
+	}
 
 	void StateMachine()
 	{
@@ -82,7 +88,7 @@ namespace UI
 			case SectionState::canvas:
 			{
 				// From canvas to top
-				if (Input::Is(ksUp))
+				if (Input::Is(kUp))
 				{
 					canvas->Deselect();
 					topSection[topState]->Select();
@@ -90,7 +96,7 @@ namespace UI
 					moved = true;
 				}
 				// From canvas to side
-				else if (Input::Is(ksLeft))
+				else if (Input::Is(kLeft))
 				{
 					canvas->Deselect();
 					sideSection[sideState]->Select();
@@ -102,21 +108,21 @@ namespace UI
 			case SectionState::top:
 			{
 				// A widget left
-				if (Input::Is(ksLeft) && topState > 0)
+				if (Input::Is(kLeft) && topState > 0)
 				{
 					topSection[topState]->Deselect();
 					topSection[--topState]->Select();
 					moved = true;
 				}
 				// A widget right
-				else if (Input::Is(ksRight) && topState < sizeof(topSection) / sizeof(nullptr) - 1)
+				else if (Input::Is(kRight) && topState < sizeof(topSection) / sizeof(nullptr) - 1)
 				{
 					topSection[topState]->Deselect();
 					topSection[++topState]->Select();
 					moved = true;
 				}
 				// From top to canvas
-				else if (Input::Is(ksDown))
+				else if (Input::Is(kDown))
 				{
 					topSection[topState]->Deselect();
 					canvas->Select();
@@ -128,21 +134,21 @@ namespace UI
 			case SectionState::side:
 			{
 				// A widget up
-				if (Input::Is(ksUp) && sideState > 0)
+				if (Input::Is(kUp) && sideState > 0)
 				{
 					sideSection[sideState]->Deselect();
 					sideSection[--sideState]->Select();
 					moved = true;
 				}
 				// A widget down
-				else if (Input::Is(ksDown) && sideState < sizeof(sideSection) / sizeof(nullptr) - 1)
+				else if (Input::Is(kDown) && sideState < sizeof(sideSection) / sizeof(nullptr) - 1)
 				{
 					sideSection[sideState]->Deselect();
 					sideSection[++sideState]->Select();
 					moved = true;
 				}
 				// From side to canvas
-				else if (Input::Is(ksRight))
+				else if (Input::Is(kRight))
 				{
 					sideSection[sideState]->Deselect();
 					canvas->Select();
@@ -160,13 +166,16 @@ namespace UI
 
 	void Initialize(Layer* layer)
 	{
+		// Canvas
+		canvas = new Canvas(UPoint(10, 10), Point(13, 4), 0, UPoint(3, 3), CellA('#', RGBA(255, 0, 0, 255), RGBA(0, 0, 255, 255)), layer);
+		canvas->Select();
 		// Up section
 		topSection[0] = new Button(layer, Exit, kReturn, Point( 44, 1 ), "Exit", true); // (Button) Exit
-		topSection[1] = new Button(layer, nullptr, kReturn, Point( 51, 1 ), "Import", true); // (Button) Import
-		topSection[2] = new Button(layer, nullptr, kReturn, Point( 60, 1 ), "Export", true); // (Button) Export
-		topSection[3] = new IntInputField(layer, NULL, 1, 78, "16", Point( 69, 1 ), "CanvasX=", true); // (Int field) Canvas size X
-		topSection[4] = new IntInputField(layer, NULL, 1, 33, "16", Point( 80, 1 ), "CanvasY=", true); // (Int field) Canvas size Y
-		topSection[5] = new Button(layer, nullptr, kReturn, Point( 91, 1 ), "Confirm", true); // (Button) Confirm canvas size
+		topSection[1] = new Button(layer, std::bind(&Canvas::Import, canvas), kReturn, Point( 51, 1 ), "Import", true); // (Button) Import
+		topSection[2] = new Button(layer, std::bind(&Canvas::Export, canvas), kReturn, Point( 60, 1 ), "Export", true); // (Button) Export
+		topSection[3] = new IntInputField(layer, nullptr, 1, 78, "16", Point( 69, 1 ), "CanvasX=", true); // (Int field) Canvas size X
+		topSection[4] = new IntInputField(layer, nullptr, 1, 33, "16", Point( 80, 1 ), "CanvasY=", true); // (Int field) Canvas size Y
+		topSection[5] = new Button(layer, ResizeCanvas, kReturn, Point( 91, 1 ), "Confirm", true); // (Button) Confirm canvas size
 		// Side section
 		sideSection[0] = new IntInputField(layer, nullptr, 0, 255, "255", Point( 2, 5 ), "R="); // (Int field) Foreground R
 		sideSection[1] = new IntInputField(layer, nullptr, 0, 255, "255", Point( 2, 6 ), "G="); // (Int field) Foreground G
@@ -180,13 +189,10 @@ namespace UI
 		sideSection[9] = new IntInputField(layer, nullptr, 1, 9, "1", { 2, 25 }, "BrushX="); // (Int field) Brush size X
 		sideSection[10] = new IntInputField(layer, nullptr, 1, 9, "1", { 2, 26 }, "BrushY="); // (Int field) Brush size Y
 		sideSection[11] = new Button(layer, nullptr, kReturn, { 2, 27 }, "Reset Pos"); // (Button) Reset brush position
-		sideSection[12] = new Button(layer, NULL, kReturn, { 2, 28 }, "Fore Tool"); // (Switch) Foreground switch
-		sideSection[13] = new Button(layer, NULL, kReturn, { 2, 29 }, "Back Tool"); // (Switch) Background switch
-		sideSection[14] = new Button(layer, NULL, kReturn, { 2, 30 }, "Char Tool"); // (Switch) Character switch
+		sideSection[12] = new Switch(layer, NULL, kReturn, { 2, 28 }, "Fore Tool", true); // (Switch) Foreground switch
+		sideSection[13] = new Switch(layer, NULL, kReturn, { 2, 29 }, "Back Tool", true); // (Switch) Background switch
+		sideSection[14] = new Switch(layer, NULL, kReturn, { 2, 30 }, "Char Tool", true); // (Switch) Character switch
 		sideSection[15] = new IntInputField(layer, nullptr, 1, 3, "1", { 2, 34 }, "Back=", true); // (Int field) Canvas background
-		// Canvas
-		canvas = new Canvas(UPoint(10, 10), Point(13, 4), 0, UPoint(3, 3), CellA('#', RGBA(255, 0, 0, 255), RGBA(0, 0, 255, 255)), layer);
-		canvas->Select();
 		// Audio
 		widgetSelectionSFX.LoadWavFile("assets/widgetsMove.wav"); // Widget selection sound effect
 		// Frames
@@ -242,10 +248,10 @@ namespace UI
 		backgroundSelectorFrame.textures[0].File("assets/backgroundSelectorFrame.kcget", Point(0, 0));
 		layer->AddObject(&backgroundSelectorFrame);
 		// Input handlers
-		Input::RegisterHandler(ksUp, StateMachine, true);
-		Input::RegisterHandler(ksLeft, StateMachine, true);
-		Input::RegisterHandler(ksDown, StateMachine, true);
-		Input::RegisterHandler(ksRight, StateMachine, true);
+		Input::RegisterHandler(kUp, StateMachine, true);
+		Input::RegisterHandler(kLeft, StateMachine, true);
+		Input::RegisterHandler(kDown, StateMachine, true);
+		Input::RegisterHandler(kRight, StateMachine, true);
 	}
 }
 
