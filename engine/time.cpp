@@ -36,7 +36,7 @@ void Engine::Time::CallInvocations()
 			}
 			else
 			{
-				// No instnaces left, remove invocation from vector.
+				// No instances left, remove invocation from vector.
 				invocations.erase(invocations.begin() + i);
 				i--;
 				continue;

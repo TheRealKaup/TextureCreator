@@ -7,8 +7,8 @@ struct Canvas : public Widget
 	Engine::AudioSource as_canvasSize;
 	Engine::AudioSource as_draw;
 
-	Engine::RGBA canvasSelected = Engine::RGBA(255, 255, 255, 255);
-	Engine::RGBA canvasUnselected = Engine::RGBA(100, 100, 100, 255);
+	Engine::RGBA selectedRGBA = Engine::RGBA(255, 255, 255, 255);
+	Engine::RGBA unselectedRGBA = Engine::RGBA(150, 150, 150, 255);
 
 	Engine::UPoint size;
 
@@ -16,26 +16,16 @@ struct Canvas : public Widget
 
 	void Select()
 	{
-		for (size_t i = 1; i < 5; i++)
-		{
-			for (size_t y = 0; y < obj.textures[i].t.size(); y++)
-			{
-				for (size_t x = 0; x < obj.textures[i].t[y].size(); x++)
-					obj.textures[i].t[y][x].f = canvasSelected;
-			}
-		}
+		for (size_t i = 1; i < 10; i++)
+			obj.textures[i].value.f = selectedRGBA;
+		selected = true;
 	}
 
 	void Deselect()
 	{
-		for (size_t i = 1; i < 5; i++)
-		{
-			for (size_t y = 0; y < obj.textures[i].t.size(); y++)
-			{
-				for (size_t x = 0; x < obj.textures[i].t[y].size(); x++)
-					obj.textures[i].t[y][x].f = canvasUnselected;
-			}
-		}
+		for (size_t i = 1; i < 10; i++)
+			obj.textures[i].value.f = unselectedRGBA;
+		selected = false;
 	}
 
 	void ChangeBackground(uint8_t type)
@@ -108,18 +98,18 @@ struct Canvas : public Widget
 			return;
 
 		// Top frame
-		obj.textures[1].Simple({ sizeX, 1 }, Engine::CellA('-', canvasUnselected, { 0, 0, 0, 0 }), { 1, 0 });
+		obj.textures[1].Simple({ sizeX, 1 }, Engine::CellA('-', unselectedRGBA, { 0, 0, 0, 0 }), { 1, 0 });
 
 		// Left frame
-		obj.textures[2].Simple({1, sizeY + 2}, Engine::CellA('|', canvasUnselected, {0, 0, 0, 0}), {0, 0});
+		obj.textures[2].Simple({1, sizeY + 2}, Engine::CellA('|', unselectedRGBA, {0, 0, 0, 0}), {0, 0});
 		obj.textures[2].t[0][0].c = '/';
 		obj.textures[2].t[sizeY + 1][0].c = '\\';
 
 		// Bottom frame
-		obj.textures[3].Simple({ sizeX, 1 }, Engine::CellA('-', canvasUnselected, { 0, 0, 0, 0 }), { 1, (int)(sizeY + 1) });
+		obj.textures[3].Simple({ sizeX, 1 }, Engine::CellA('-', unselectedRGBA, { 0, 0, 0, 0 }), { 1, (int)(sizeY + 1) });
 
 		// Right frame
-		obj.textures[4].Simple({ 1, sizeY + 2 }, Engine::CellA('|', canvasUnselected, { 0, 0, 0, 0 }), { (int)(sizeX + 1), 0 });
+		obj.textures[4].Simple({ 1, sizeY + 2 }, Engine::CellA('|', unselectedRGBA, { 0, 0, 0, 0 }), { (int)(sizeX + 1), 0 });
 		obj.textures[4].t[0][0].c = '\\';
 		obj.textures[4].t[sizeY + 1][0].c = '/';
 
@@ -168,13 +158,13 @@ struct Canvas : public Widget
 			return;
 
 		if (Engine::Input::Is('w')) // up
-			brush.Move({ 0, -1 });
+			obj.textures[10].pos.y--;
 		else if (Engine::Input::Is('a')) // left
-			brush.Move({ -1, 0 });
+			obj.textures[10].pos.x--;
 		else if (Engine::Input::Is('s')) // down
-			brush.Move({ 0, 1 });
+			obj.textures[10].pos.y++;
 		else // right
-			brush.Move({ 1, 0 });
+			obj.textures[10].pos.x++;
 	}
 
 	void Draw(bool fore, bool back, bool character)
@@ -329,26 +319,58 @@ struct Canvas : public Widget
 		brush.pos = { obj.pos.x + 1, obj.pos.y + 1 };
 	}
 
-	Canvas(Engine::Point pos, Engine::UPoint size, uint8_t backgroundType, Engine::UPoint brushSize, Engine::CellA brushValue, Engine::Layer* layer)
+	Canvas(Engine::UPoint size, Engine::Point pos, uint8_t backgroundType, Engine::UPoint brushSize, Engine::CellA brushValue, Engine::Layer* layer)
 	{
+		obj.pos = pos;
+
+		// Canvas textures
+		obj.textures.resize(11);
+		// Background
+		if (backgroundType == 0)
+			obj.textures[0].Rectangle(size, Engine::CellA(' ', Engine::RGBA(0, 0, 0, 0), Engine::RGBA(0, 0, 0, 255)), Engine::Point(1, 1));
+		else if (backgroundType == 1)
+			obj.textures[0].Rectangle(size, Engine::CellA(' ', Engine::RGBA(0, 0, 0, 0), Engine::RGBA(255, 0, 0, 255)), Engine::Point(1, 1));
+		else
+		{
+			obj.textures[0].Rectangle(size, Engine::CellA(' ', Engine::RGBA(0, 0, 0, 0), Engine::RGBA(255, 255, 255, 255)), Engine::Point(1, 1));
+			bool offset = false;
+			for (size_t y = 0; y < obj.textures[0].t.size(); y++, offset = !offset)
+			{
+				bool isGrayPixel = offset;
+				for (size_t x = 0; x < obj.textures[0].t[y].size(); x++, isGrayPixel = !isGrayPixel)
+					if (isGrayPixel)
+						obj.textures[0].t[y][x].b = Engine::RGBA(150, 150, 150, 255); 
+			}
+		}
+		// Canvas itself
+		obj.textures[1].Rectangle(size, Engine::CellA(' '), Engine::Point(1, 1));
+		// Top-left corner
+		obj.textures[2].Simple(Engine::UPoint(1, 1), Engine::CellA('/', Engine::RGBA(150, 150, 150, 255), Engine::RGBA(0, 0, 0, 0)), Engine::Point(0, 0));
+		// Top-right corner
+		obj.textures[3].Simple(Engine::UPoint(1, 1), Engine::CellA('\\', Engine::RGBA(150, 150, 150, 255), Engine::RGBA(0, 0, 0, 0)), Engine::Point(1 + size.x, 0));
+		// Bottom-left corner
+		obj.textures[4].Simple(Engine::UPoint(1, 1), Engine::CellA('\\', Engine::RGBA(150, 150, 150, 255), Engine::RGBA(0, 0, 0, 0)), Engine::Point(0, 1 + size.y));
+		// Bottom-right corner
+		obj.textures[5].Simple(Engine::UPoint(1, 1), Engine::CellA('/', Engine::RGBA(150, 150, 150, 255), Engine::RGBA(0, 0, 0, 0)), Engine::Point(1 + size.x, 1 + size.y));
+		// Top frame
+		obj.textures[6].Simple(Engine::UPoint(size.x, 1), Engine::CellA('-', Engine::RGBA(150, 150, 150, 255), Engine::RGBA(0, 0, 0, 0)), Engine::Point(1, 0));
+		// Bottom frame
+		obj.textures[7].Simple(Engine::UPoint(size.x, 1), Engine::CellA('-', Engine::RGBA(150, 150, 150, 255), Engine::RGBA(0, 0, 0, 0)), Engine::Point(1, 1 + size.y));
+		// Left frame
+		obj.textures[8].Simple(Engine::UPoint(1, size.y), Engine::CellA('|', Engine::RGBA(150, 150, 150, 255), Engine::RGBA(0, 0, 0, 0)), Engine::Point(0, 1));
+		// Right frame
+		obj.textures[9].Simple(Engine::UPoint(1, size.y), Engine::CellA('|', Engine::RGBA(150, 150, 150, 255), Engine::RGBA(0, 0, 0, 0)), Engine::Point(1 + size.x, 1));
+		// Brush texture
+		obj.textures[10].Simple(brushSize, brushValue, Engine::Point(size.x / 2 - brushSize.x / 2 + 1, size.y / 2 - brushSize.y / 2 + 1));
+
+		layer->AddObject(&obj);
+
+		// Audio sources
 		as_canvasSize.LoadWavFile("assets/canvasResize.wav");
 		as_draw.LoadWavFile("assets/draw.wav");
 
-		obj.pos = pos;
-		obj.textures.resize(6);
-		obj.colliders.resize(4);
-		Resize(true, size, backgroundType);
-		Select();
-		layer->AddObject(&obj);
-
-		brush.pos = Engine::Point( pos.x + 1, pos.y + 1);
-		brush.textures.resize(1);
-		brush.colliders.resize(4);
-		layer->AddObject(&brush);
-		UpdateBrush(brushSize, brushValue);
-
-		Engine::Input::RegisterHandler(kReturn, std::bind(&Canvas::Draw, this, true, true, true), true);
-
+		// Input handlers
+		// Engine::Input::RegisterHandler(kReturn, std::bind(&Canvas::Draw, this, true, true, true), true);
 		Engine::Input::RegisterHandler('w', std::bind(&Canvas::MoveBrush, this), true);
 		Engine::Input::RegisterHandler('a', std::bind(&Canvas::MoveBrush, this), true);
 		Engine::Input::RegisterHandler('s', std::bind(&Canvas::MoveBrush, this), true);

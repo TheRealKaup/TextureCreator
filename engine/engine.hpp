@@ -179,6 +179,7 @@ namespace Engine
 
 		void CallInvocations();
 
+		inline void StartThisTick() { Time::thisTickStartTP.SetToNow(); }
 		// Suspend the thread the amount of time should be left for the tick according to `tps`.
 		// Also adds 1 to `totalTicks` and resets `thisTickStartTP`.
 		void WaitUntilNextTick();
