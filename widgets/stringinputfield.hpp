@@ -101,7 +101,7 @@ public:
 		bool withFrame = false,
 		Engine::RGBA unselectedRGBA = { 150, 150, 150, 255 },
 		Engine::RGBA selectedRGBA = { 255, 255, 255, 255 })
-		: OnInsert(OnInsert), maxChars(maxChars), unselectedRGBA(unselectedRGBA), selectedRGBA(selectedRGBA)
+		: OnInsert(OnInsert), maxChars(maxChars), unselectedRGBA(unselectedRGBA), selectedRGBA(selectedRGBA), string(defaultString)
 	{
 		obj.pos = pos;
 

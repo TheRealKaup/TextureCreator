@@ -5,10 +5,10 @@ struct Canvas : public Widget
 	Engine::UPoint size;
 	uint8_t backgroundType;
 
-	Engine::Object brush;
+	Engine::Object brushDeprecated;
 
-	Engine::AudioSource as_canvasSize;
-	Engine::AudioSource as_draw;
+	Engine::AudioSource canvasResizeSFX;
+	Engine::AudioSource drawSFX;
 
 	Engine::RGBA selectedRGBA = Engine::RGBA(255, 255, 255, 255);
 	Engine::RGBA unselectedRGBA = Engine::RGBA(150, 150, 150, 255);
@@ -27,130 +27,59 @@ struct Canvas : public Widget
 		selected = false;
 	}
 
-	void ChangeBackground(uint8_t type)
+	void SetBackground(uint8_t type)
 	{
 		backgroundType = type;
 
 		if (type == 1)
-		{
-			for (size_t y = 0; y < obj.textures[0].t.size(); y++)
-			{
-				for (size_t x = 0; x < obj.textures[0].t[y].size(); x++)
-					obj.textures[0].t[y][x].b = { 0, 0, 0, 0 };
-			}
-		}
+			obj.textures[0].Simple(size, Engine::CellA(' ', Engine::RGBA(0, 0, 0, 0), Engine::RGBA(0, 0, 0, 0)), Engine::Point(0, 0));
 		else if (type == 2)
-		{
-			for (size_t y = 0; y < obj.textures[0].t.size(); y++)
-			{
-				for (size_t x = 0; x < obj.textures[0].t[y].size(); x++)
-					obj.textures[0].t[y][x].b = { 255, 0, 0, 255 };
-			}
-		}
+			obj.textures[1].Simple(size, Engine::CellA(' ', Engine::RGBA(0, 0, 0, 0), Engine::RGBA(255, 0, 0, 255)), Engine::Point(0, 0));
 		else if (type == 3)
 		{
-			bool offone = false;
+			obj.textures[0].Rectangle(size, Engine::CellA(' ', Engine::RGBA(0, 0, 0, 0), Engine::RGBA(255, 255, 255, 255)), Engine::Point(1, 1));
+			bool offone = true;
 			for (size_t y = 0; y < obj.textures[0].t.size(); y++, offone = !offone)
-			{
 				for (size_t x = 0; x < obj.textures[0].t[y].size(); x++)
-				{
 					if (x % 2 == offone)
 						obj.textures[0].t[y][x].b = { 205, 205, 205, 255 };
-					else
-						obj.textures[0].t[y][x].b = { 255, 255, 255, 255 };
-				}
-			}
 		}
 	}
 
 	void Resize(Engine::UPoint _size)
 	{
-		size = _size;
-
-		// Textures
-
-		uint32_t sizeX = size.x;
-		uint32_t sizeY = size.y;
-
-		// Background
-		obj.textures[0].pos = { 1, 1 };
-		obj.textures[0].t.resize(sizeY);
-		if (backgroundType == 1)
-		{
-			for (size_t y = 0; y < sizeY; y++)
-				obj.textures[0].t[y].resize(sizeX, Engine::CellA(' ', { 0, 0, 0, 0 }, { 0, 0, 0, 0 }));
-		}
-		else if (backgroundType == 2)
-		{
-			for (size_t y = 0; y < sizeY; y++)
-				obj.textures[0].t[y].resize(sizeX, Engine::CellA(' ', { 0, 0, 0, 0 }, { 255, 0, 0, 255 }));
-		}
-		else if (backgroundType == 3)
-		{
-			bool offone = false;
-			for (size_t y = 0; y < sizeY; y++, offone = !offone)
-			{
-				obj.textures[0].t[y].resize(sizeX, Engine::CellA(' ', { 0, 0, 0, 0 }, { 255, 255, 255, 255 }));
-				for (size_t x = offone; x < sizeX; x+=2)
-					obj.textures[0].t[y][x].b = { 205, 205, 205, 255 };
-			}
-		}
-		
-		// If the size isn't changed then don't proceed. (Unless it is the first call)
-		if (obj.textures[5].t.size() == sizeY && obj.textures[5].t[0].size() == sizeX)
+		// If the size isn't changed then don't proceed.
+		if (size.x == _size.x && size.y == _size.y)
 			return;
 
+		size = _size;
+
+		SetBackground(backgroundType);
+		
+		// Resize the canvas itself.
+		obj.textures[1].t.resize(size.y);
+		for (size_t y = 0; y < obj.textures.size(); y++)
+			obj.textures[1].t[y].resize(size.x, Engine::CellA());
+
+		// Top-right corner
+		obj.textures[3].pos.x = size.x + 1;
+		// Bottom-left corner
+		obj.textures[4].pos.y = size.y + 1;
+		// Bottom-right corner
+		obj.textures[5].pos = Engine::Point(size.x + 1, size.y + 1);
 		// Top frame
-		obj.textures[1].Simple({ sizeX, 1 }, Engine::CellA('-', unselectedRGBA, { 0, 0, 0, 0 }), { 1, 0 });
-
-		// Left frame
-		obj.textures[2].Simple({1, sizeY + 2}, Engine::CellA('|', unselectedRGBA, {0, 0, 0, 0}), {0, 0});
-		obj.textures[2].t[0][0].c = '/';
-		obj.textures[2].t[sizeY + 1][0].c = '\\';
-
+		obj.textures[6].size.x = size.x;
 		// Bottom frame
-		obj.textures[3].Simple({ sizeX, 1 }, Engine::CellA('-', unselectedRGBA, { 0, 0, 0, 0 }), { 1, (int)(sizeY + 1) });
-
+		obj.textures[7].size.x = size.x;
+		obj.textures[7].pos.y = size.y + 1;
+		// Left frame
+		obj.textures[8].size.y = size.y;
 		// Right frame
-		obj.textures[4].Simple({ 1, sizeY + 2 }, Engine::CellA('|', unselectedRGBA, { 0, 0, 0, 0 }), { (int)(sizeX + 1), 0 });
-		obj.textures[4].t[0][0].c = '\\';
-		obj.textures[4].t[sizeY + 1][0].c = '/';
-
-		// Canvas itself
-		obj.textures[5].pos = { 1, 1 };
-		obj.textures[5].t.resize(sizeY);
-		for (size_t y = 0; y < sizeY; y++)
-			obj.textures[5].t[y].resize(sizeX, Engine::CellA(' ', { 0, 0, 0, 0 }, { 0, 0, 0, 0 }));
-
-
-		// Colliders
-
-		// Top
-		obj.colliders[0].pos = { 0, 0 };
-		obj.colliders[0].simple = true;
-		obj.colliders[0].size = { sizeX + 2, 1 };
-		obj.colliders[0].type = 0;
-
-		// Left
-		obj.colliders[1].pos = { 0, 0 };
-		obj.colliders[1].simple = true;
-		obj.colliders[1].size = { 1, sizeY + 2 };
-		obj.colliders[1].type = 1;
-
-		// Bottom
-		obj.colliders[2].pos = { 0, (int)(sizeY + 1) };
-		obj.colliders[2].simple = true;
-		obj.colliders[2].size = { sizeX + 2, 1 };
-		obj.colliders[2].type = 2;
-
-		// Right
-		obj.colliders[3].pos = { (int)(sizeX + 1), 0 };
-		obj.colliders[3].simple = true;
-		obj.colliders[3].size = { 1, sizeY + 2 };
-		obj.colliders[3].type = 3;
+		obj.textures[9].size.y = size.y;
+		obj.textures[9].pos.x = size.x + 1;
 
 		// Play sound effect.
-		as_canvasSize.Play(0, 0, 0, 0.5f);
+		canvasResizeSFX.Play(0, 0, 0, 0.5f);
 	}
 
 	void Draw(bool fore, bool back, bool character)
@@ -159,55 +88,57 @@ struct Canvas : public Widget
 		if (!selected)
 			return;
 
-		for (size_t y = 0; y < brush.textures[0].t.size(); y++)
+		// Draw
+		for (size_t y = 0; y < obj.textures[10].size.y; y++)
 		{
-			for (size_t x = 0; x < brush.textures[0].t[y].size(); x++)
+			for (size_t x = 0; x < obj.textures[10].size.x; x++)
 			{
-				int fy = y - obj.pos.y - obj.textures[5].pos.y + brush.pos.y;
-				int fx = x - obj.pos.x - obj.textures[5].pos.x + brush.pos.x;
+				uint32_t fy = obj.textures[10].pos.y - 1 + y;
+				uint32_t fx = obj.textures[10].pos.x - 1 + x;
 
-				if (fy < 0 || fy >= obj.textures[5].t.size())
+				if (fy < 0 || fy >= obj.textures[1].t.size())
 					break;
-				if (fx < 0 || fx >= obj.textures[5].t[0].size())
+				if (fx < 0 || fx >= obj.textures[1].t[fy].size())
 					continue;
 
 				if (fore)
-					obj.textures[5].t[fy][fx].f = brush.textures[0].t[y][x].f;
+					obj.textures[1].t[fy][fx].f = obj.textures[10].value.f;
 				if (back)
-					obj.textures[5].t[fy][fx].b = brush.textures[0].t[y][x].b;
+					obj.textures[1].t[fy][fx].b = obj.textures[10].value.b;
 				if (character)
-					obj.textures[5].t[fy][fx].c = brush.textures[0].t[y][x].c;
+					obj.textures[1].t[fy][fx].c = obj.textures[10].value.c;
 			}
 		}
+
 		// Play sound effect.
-		as_draw.Play();
+		drawSFX.Play();
 	}
 
 	void UpdateBrush(Engine::UPoint size, Engine::CellA value)
 	{
 		// Texture
-		brush.textures[0].Simple(size, value, Engine::Point(0, 0));
+		brushDeprecated.textures[0].Simple(size, value, Engine::Point(0, 0));
 
 		// Colliders
-		brush.colliders[0].pos = Engine::Point(0, 0);
-		brush.colliders[0].simple = true;
-		brush.colliders[0].size = { 1, 1 };
-		brush.colliders[0].type = 0;
+		brushDeprecated.colliders[0].pos = Engine::Point(0, 0);
+		brushDeprecated.colliders[0].simple = true;
+		brushDeprecated.colliders[0].size = { 1, 1 };
+		brushDeprecated.colliders[0].type = 0;
 
-		brush.colliders[1].pos = Engine::Point(0, size.y - 1);
-		brush.colliders[1].simple = true;
-		brush.colliders[1].size = { 1, 1 };
-		brush.colliders[1].type = 1;
+		brushDeprecated.colliders[1].pos = Engine::Point(0, size.y - 1);
+		brushDeprecated.colliders[1].simple = true;
+		brushDeprecated.colliders[1].size = { 1, 1 };
+		brushDeprecated.colliders[1].type = 1;
 
-		brush.colliders[2].pos = Engine::Point( size.x - 1, size.y - 1 );
-		brush.colliders[2].simple = true;
-		brush.colliders[2].size = { 1, 1 };
-		brush.colliders[2].type = 2;
+		brushDeprecated.colliders[2].pos = Engine::Point( size.x - 1, size.y - 1 );
+		brushDeprecated.colliders[2].simple = true;
+		brushDeprecated.colliders[2].size = { 1, 1 };
+		brushDeprecated.colliders[2].type = 2;
 
-		brush.colliders[3].pos = Engine::Point( size.x - 1, 0 );
-		brush.colliders[3].simple = true;
-		brush.colliders[3].size = { 1, 1 };
-		brush.colliders[3].type = 3;
+		brushDeprecated.colliders[3].pos = Engine::Point( size.x - 1, 0 );
+		brushDeprecated.colliders[3].simple = true;
+		brushDeprecated.colliders[3].size = { 1, 1 };
+		brushDeprecated.colliders[3].type = 3;
 	}
 
 	void Import()
@@ -319,19 +250,19 @@ struct Canvas : public Widget
 		else if (Engine::Input::Is('s')) // down
 		{
 			// Not casting to `int32_t` will make the brush stuck when the position is negative.
-			if (obj.textures[10].pos.y < (int32_t)obj.textures[0].t.size())
+			if (obj.textures[10].pos.y < (int32_t)size.y)
 				obj.textures[10].pos.y++;
 		}
 		else // right
 		{
-			if (obj.textures[10].pos.x < (int32_t)obj.textures[0].t[0].size())
+			if (obj.textures[10].pos.x < (int32_t)size.x)
 				obj.textures[10].pos.x++;
 		}
 	}
 
 	void ResetBrushPos()
 	{
-		brush.pos = Engine::Point( obj.pos.x + 1, obj.pos.y + 1 );
+		brushDeprecated.pos = Engine::Point( obj.pos.x + 1, obj.pos.y + 1 );
 	}
 
 	Canvas(Engine::UPoint _size, Engine::Point pos, uint8_t backgroundType, Engine::UPoint brushSize, Engine::CellA brushValue, Engine::Layer* layer)
@@ -339,12 +270,12 @@ struct Canvas : public Widget
 		obj.pos = pos;
 		size = _size;
 
-		// Canvas textures
+		// Textures
 		obj.textures.resize(11);
 		// Background
-		if (backgroundType == 0)
+		if (backgroundType == 1)
 			obj.textures[0].Rectangle(size, Engine::CellA(' ', Engine::RGBA(0, 0, 0, 0), Engine::RGBA(0, 0, 0, 255)), Engine::Point(1, 1));
-		else if (backgroundType == 1)
+		else if (backgroundType == 2)
 			obj.textures[0].Rectangle(size, Engine::CellA(' ', Engine::RGBA(0, 0, 0, 0), Engine::RGBA(255, 0, 0, 255)), Engine::Point(1, 1));
 		else
 		{
@@ -359,7 +290,7 @@ struct Canvas : public Widget
 			}
 		}
 		// Canvas itself
-		obj.textures[1].Rectangle(size, Engine::CellA(' '), Engine::Point(1, 1));
+		obj.textures[1].Rectangle(size, Engine::CellA(' ', Engine::RGBA(0, 0, 0, 0)), Engine::Point(1, 1));
 		// Top-left corner
 		obj.textures[2].Simple(Engine::UPoint(1, 1), Engine::CellA('/', Engine::RGBA(150, 150, 150, 255), Engine::RGBA(0, 0, 0, 0)), Engine::Point(0, 0));
 		// Top-right corner
@@ -382,8 +313,8 @@ struct Canvas : public Widget
 		layer->AddObject(&obj);
 
 		// Audio sources
-		as_canvasSize.LoadWavFile("assets/canvasResize.wav");
-		as_draw.LoadWavFile("assets/draw.wav");
+		canvasResizeSFX.LoadWavFile("assets/canvasResize.wav");
+		drawSFX.LoadWavFile("assets/draw.wav");
 
 		// Input handlers
 		// Engine::Input::RegisterHandler(kReturn, std::bind(&Canvas::Draw, this, true, true, true), true);
