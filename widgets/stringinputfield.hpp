@@ -29,7 +29,7 @@ private:
 					return;
 
 				currentChar--;
-				string.resize(string.size() - 1);
+				string.pop_back();
 
 				obj.textures[0].t[0][currentChar].c = ' ';
 			}
@@ -111,6 +111,11 @@ public:
 			obj.textures.resize(10);
 			// input
 			obj.textures[0].Rectangle(Engine::UPoint(maxChars, 1), Engine::CellA(' ', unselectedRGBA), Engine::Point(1 + text.length(), 1));
+			for (size_t i = 0; i < string.length() && i < obj.textures[0].t[0].size(); i++)
+			{
+				obj.textures[0].t[0][i].c = string[i];
+				currentChar++;
+			}
 			// text
 			obj.textures[1].Write({text}, unselectedRGBA, Engine::RGBA(0, 0, 0, 0), Engine::Point(1, 1));
 			// up-left corner
@@ -135,6 +140,11 @@ public:
 			obj.textures.resize(2);
 			// input
 			obj.textures[0].Rectangle(Engine::UPoint(maxChars, 1), Engine::CellA(' ', unselectedRGBA), Engine::Point(1 + text.length(), 1));
+			for (size_t i = 0; i < string.length() && i < obj.textures[0].t[0].size(); i++)
+			{
+				obj.textures[0].t[0][i].c = string[i];
+				currentChar++;
+			}
 			// text
 			obj.textures[1].Write({text}, unselectedRGBA, Engine::RGBA(0, 0, 0, 0), Engine::Point(1, 1));
 		}

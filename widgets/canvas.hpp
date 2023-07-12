@@ -32,9 +32,9 @@ struct Canvas : public Widget
 		backgroundType = type;
 
 		if (type == 1)
-			obj.textures[0].Simple(size, Engine::CellA(' ', Engine::RGBA(0, 0, 0, 0), Engine::RGBA(0, 0, 0, 0)), Engine::Point(0, 0));
+			obj.textures[0].Simple(size, Engine::CellA(' ', Engine::RGBA(0, 0, 0, 0), Engine::RGBA(0, 0, 0, 0)), Engine::Point(1, 1));
 		else if (type == 2)
-			obj.textures[1].Simple(size, Engine::CellA(' ', Engine::RGBA(0, 0, 0, 0), Engine::RGBA(255, 0, 0, 255)), Engine::Point(0, 0));
+			obj.textures[0].Simple(size, Engine::CellA(' ', Engine::RGBA(0, 0, 0, 0), Engine::RGBA(255, 0, 0, 255)), Engine::Point(1, 1));
 		else if (type == 3)
 		{
 			obj.textures[0].Rectangle(size, Engine::CellA(' ', Engine::RGBA(0, 0, 0, 0), Engine::RGBA(255, 255, 255, 255)), Engine::Point(1, 1));
@@ -58,8 +58,8 @@ struct Canvas : public Widget
 		
 		// Resize the canvas itself.
 		obj.textures[1].t.resize(size.y);
-		for (size_t y = 0; y < obj.textures.size(); y++)
-			obj.textures[1].t[y].resize(size.x, Engine::CellA());
+		for (size_t y = 0; y < obj.textures[1].t.size(); y++)
+			obj.textures[1].t[y].resize(size.x, Engine::CellA(' ', Engine::RGBA(0, 0, 0, 0)));
 
 		// Top-right corner
 		obj.textures[3].pos.x = size.x + 1;
@@ -116,119 +116,8 @@ struct Canvas : public Widget
 
 	void UpdateBrush(Engine::UPoint size, Engine::CellA value)
 	{
-		// Texture
-		brushDeprecated.textures[0].Simple(size, value, Engine::Point(0, 0));
-
-		// Colliders
-		brushDeprecated.colliders[0].pos = Engine::Point(0, 0);
-		brushDeprecated.colliders[0].simple = true;
-		brushDeprecated.colliders[0].size = { 1, 1 };
-		brushDeprecated.colliders[0].type = 0;
-
-		brushDeprecated.colliders[1].pos = Engine::Point(0, size.y - 1);
-		brushDeprecated.colliders[1].simple = true;
-		brushDeprecated.colliders[1].size = { 1, 1 };
-		brushDeprecated.colliders[1].type = 1;
-
-		brushDeprecated.colliders[2].pos = Engine::Point( size.x - 1, size.y - 1 );
-		brushDeprecated.colliders[2].simple = true;
-		brushDeprecated.colliders[2].size = { 1, 1 };
-		brushDeprecated.colliders[2].type = 2;
-
-		brushDeprecated.colliders[3].pos = Engine::Point( size.x - 1, 0 );
-		brushDeprecated.colliders[3].simple = true;
-		brushDeprecated.colliders[3].size = { 1, 1 };
-		brushDeprecated.colliders[3].type = 3;
-	}
-
-	void Import()
-	{
-		std::ifstream file("import.kcget");
-		if (!file.is_open())
-			return;
-		std::string line;
-
-		Engine::CellA schar;
-
-		int maxX = 0;
-
-		obj.textures[5].t = {};
-
-		size_t y = 0;
-		for (; std::getline(file, line); y++)
-		{
-			obj.textures[5].t.push_back({});
-
-			// potentially broken if one of the values = 10 ('\n')
-
-			for (size_t x = 0, j = 0; x < line.length(); x++, j++)
-			{
-				if (j == 9)
-					j = 0;
-				if (j == 0)
-					schar.f.r = (unsigned char)line[x];
-				else if (j == 1)
-					schar.f.g = (unsigned char)line[x];
-				else if (j == 2)
-					schar.f.b = (unsigned char)line[x];
-				else if (j == 3)
-					schar.f.a = (unsigned char)line[x] / 255.0f;
-				else if (j == 4)
-					schar.b.r = (unsigned char)line[x];
-				else if (j == 5)
-					schar.b.g = (unsigned char)line[x];
-				else if (j == 6)
-					schar.b.b = (unsigned char)line[x];
-				else if (j == 7)
-					schar.b.a = (unsigned char)line[x] / 255.0f;
-				else if (j == 8)
-				{
-					schar.c = line[x];
-					obj.textures[5].t[y].push_back(schar);
-				}
-			}
-
-			if (maxX < obj.textures[5].t[y].size())
-				maxX = obj.textures[5].t[y].size();
-		}
-
-		for (size_t y = 0; y < obj.textures[5].t.size(); y++)
-			obj.textures[5].t[y].resize(maxX, Engine::CellA(' ', { 0, 0, 0, 0 }, { 0, 0, 0, 0 }));
-
-		size.x = maxX;
-		size.y = y;
-
-		Resize(size);
-	}
-
-	void Export()
-	{
-		std::ofstream outFile("export.kcget");
-
-		// create (if doesn't exist) file named "textureExport.kcget" and its content is
-		// the current texture of canvas.textures[0].t
-
-		std::string out = "";
-
-		for (size_t y = 0; y < obj.textures[5].t.size(); y++)
-		{
-			for (size_t x = 0; x < obj.textures[5].t[y].size(); x++)
-			{
-				out += obj.textures[5].t[y][x].f.r;
-				out += obj.textures[5].t[y][x].f.g;
-				out += obj.textures[5].t[y][x].f.b;
-				out += (char)(obj.textures[5].t[y][x].f.a * 255);
-				out += obj.textures[5].t[y][x].b.r;
-				out += obj.textures[5].t[y][x].b.g;
-				out += obj.textures[5].t[y][x].b.b;
-				out += (char)(obj.textures[5].t[y][x].b.a * 255);
-				out += obj.textures[5].t[y][x].c;
-			}
-			if (y < obj.textures[5].t.size() - 1)
-				out += '\n';
-		}
-
-		outFile.write(out.c_str(), out.length());
+		obj.textures[10].size = size;
+		obj.textures[10].value = value;
 	}
 
 	void MoveBrush()
@@ -262,7 +151,19 @@ struct Canvas : public Widget
 
 	void ResetBrushPos()
 	{
-		brushDeprecated.pos = Engine::Point( obj.pos.x + 1, obj.pos.y + 1 );
+		obj.textures[10].pos = Engine::Point( size.x / 2 + obj.textures[10].size.x / 2 + 1, size.y / 2 + obj.textures[10].size.y / 2 + 1);
+	}
+
+	bool Import(const std::string& fileName)
+	{
+		Resize(obj.textures[1].File(fileName, Engine::Point(1, 1)));
+
+		return true;
+	}
+
+	void Export(const std::string& fileName)
+	{
+		obj.textures[1].ExportToFile(fileName);
 	}
 
 	Canvas(Engine::UPoint _size, Engine::Point pos, uint8_t backgroundType, Engine::UPoint brushSize, Engine::CellA brushValue, Engine::Layer* layer)

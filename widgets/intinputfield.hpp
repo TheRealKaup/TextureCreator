@@ -30,7 +30,7 @@ private:
 				currentDigit--;
 				obj.textures[0].t[0][currentDigit].c = ' ';
 			}
-			else if (Engine::Input::Num())
+			else if (Engine::Input::IsNum())
 			{
 				if (currentDigit == maxDigits)
 					return;

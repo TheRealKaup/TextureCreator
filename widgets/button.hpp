@@ -14,17 +14,13 @@ private:
 	{
 		if (selected)
 		{
-			for (size_t x = 0; x < obj.textures[0].t[0].size(); x++)
-				obj.textures[0].t[0][x].f = selectedRGBA;
-			for (size_t i = 1; i < obj.textures.size(); i++)
-				obj.textures[i].value.f = selectedRGBA;
+			for (size_t i = 0; i < obj.textures.size(); i++)
+				obj.textures[i].SetForeground(selectedRGBA);
 		}
 		else
 		{
-			for (size_t x = 0; x < obj.textures[0].t[0].size(); x++)
-				obj.textures[0].t[0][x].f = unselectedRGBA;
-			for (size_t i = 1; i < obj.textures.size(); i++)
-				obj.textures[i].value.f = unselectedRGBA;
+			for (size_t i = 0; i < obj.textures.size(); i++)
+				obj.textures[i].SetForeground(unselectedRGBA);
 		}
 	}
 

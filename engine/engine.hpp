@@ -212,17 +212,17 @@ namespace Engine
 
 	struct Cell
 	{
-		char c;
 		RGB f;
 		RGB b;
+		char c;
 		inline Cell(char character = ' ', RGB foreground = {0, 0, 0}, RGB background = { 0, 0, 0 }) : c(character), f{foreground}, b(background) {}
 	};
 
 	struct CellA
 	{
-		char c;
 		RGBA f;
 		RGBA b;
+		char c;
 		inline CellA(char character = ' ', RGBA foreground = {255, 255, 255, 255}, RGBA background = {0, 0, 0, 0}) : c(character), f{foreground}, b(background) {}
 	};
 
@@ -255,8 +255,8 @@ namespace Engine
 		void Simple(UPoint size, CellA value, Point position);
 		// [Complex] Create a rectangle.
 		void Rectangle(UPoint size, CellA value, Point position);// Load from a file.
-		// [Complex] Load from a file.
-		bool File(const std::string& fileName, Point position);
+		// [Complex] Load from a file. Returns the new size of the texture ({0, 0} if failed to open the file).
+		Engine::UPoint File(const std::string& fileName, Point position);
 		// [Complex] Create a texture by writing it (limited to single foreground and background RGBA values)
 		void Write(const std::vector<std::string>& stringVector, RGBA frgba, RGBA brgba, Point position);
 		// Change all the cells' values
@@ -267,6 +267,8 @@ namespace Engine
 		void SetBackground(RGBA value);
 		// Change all the cells' character values
 		void SetCharacter(char value);
+		
+		void ExportToFile(const std::string& fileName);
 	};
 
 	struct Collider

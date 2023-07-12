@@ -90,6 +90,46 @@ namespace UI
 		canvas->ResetBrushPos();
 	}
 
+	void UpdateBrush()
+	{
+		canvas->UpdateBrush(
+			UPoint(
+				((IntInputField*)sideSection[9])->number,
+				((IntInputField*)sideSection[10])->number
+			),
+			CellA(
+				((StringInputField*)sideSection[8])->string.length() == 0 ? ' ' : ((StringInputField*)sideSection[8])->string[0],
+				Engine::RGBA(
+					((IntInputField*)sideSection[0])->number,
+					((IntInputField*)sideSection[1])->number,
+					((IntInputField*)sideSection[2])->number,
+					((IntInputField*)sideSection[3])->number
+				),
+				Engine::RGBA(
+					((IntInputField*)sideSection[4])->number,
+					((IntInputField*)sideSection[5])->number,
+					((IntInputField*)sideSection[6])->number,
+					((IntInputField*)sideSection[7])->number
+				)
+			)
+		);
+	}
+
+	void SetBackground()
+	{
+		canvas->SetBackground(((IntInputField*)sideSection[15])->number);
+	}
+
+	void Import()
+	{
+		canvas->Import("import.ktecht");
+	}
+
+	void Export()
+	{
+		canvas->Export("export.ktecht");
+	}
+
 	void StateMachine()
 	{
 		bool moved = false;
@@ -178,32 +218,32 @@ namespace UI
 	{
 		// Up section
 		topSection[0] = new Button(layer, Exit, kReturn, Point( 44, 1 ), "Exit", true); // (Button) Exit
-		topSection[1] = new Button(layer, std::bind(&Canvas::Import, canvas), kReturn, Point( 51, 1 ), "Import", true); // (Button) Import
-		topSection[2] = new Button(layer, std::bind(&Canvas::Export, canvas), kReturn, Point( 60, 1 ), "Export", true); // (Button) Export
-		topSection[3] = new IntInputField(layer, nullptr, 1, 78, "16", Point( 69, 1 ), "CanvasX=", true); // (Int field) Canvas size X
-		topSection[4] = new IntInputField(layer, nullptr, 1, 33, "16", Point( 80, 1 ), "CanvasY=", true); // (Int field) Canvas size Y
+		topSection[1] = new Button(layer, Import, kReturn, Point( 51, 1 ), "Import", true); // (Button) Import
+		topSection[2] = new Button(layer, Export, kReturn, Point( 60, 1 ), "Export", true); // (Button) Export
+		topSection[3] = new IntInputField(layer, UpdateBrush, 1, 78, "16", Point( 69, 1 ), "CanvasX=", true); // (Int field) Canvas size X
+		topSection[4] = new IntInputField(layer, UpdateBrush, 1, 33, "16", Point( 80, 1 ), "CanvasY=", true); // (Int field) Canvas size Y
 		topSection[5] = new Button(layer, ResizeCanvas, kReturn, Point( 91, 1 ), "Confirm", true); // (Button) Confirm canvas size
 		// Side section
-		sideSection[0] = new IntInputField(layer, nullptr, 0, 255, "255", Point( 2, 5 ), "R="); // (Int field) Foreground R
-		sideSection[1] = new IntInputField(layer, nullptr, 0, 255, "255", Point( 2, 6 ), "G="); // (Int field) Foreground G
-		sideSection[2] = new IntInputField(layer, nullptr, 0, 255, "255", Point( 2, 7 ), "B="); // (Int field) Foreground B
-		sideSection[3] = new IntInputField(layer, nullptr, 0, 255, "255", Point( 2, 8 ), "A="); // (Int field) Foreground A
-		sideSection[4] = new IntInputField(layer, nullptr, 0, 255, "0", Point( 2, 13 ), "R="); // (Int field) Background R
-		sideSection[5] = new IntInputField(layer, nullptr, 0, 255, "0", Point( 2, 14 ), "G="); // (Int field) Background G
-		sideSection[6] = new IntInputField(layer, nullptr, 0, 255, "0", Point( 2, 15 ), "B="); // (Int field) Background B
-		sideSection[7] = new IntInputField(layer, nullptr, 0, 255, "0", Point( 2, 16 ), "A="); // (Int field) Background A
-		sideSection[8] = new StringInputField(layer, nullptr, { Characters_All }, { 2, 20 }, "Char=", 1, "#", true); // (String field) Character
-		sideSection[9] = new IntInputField(layer, nullptr, 1, 9, "1", { 2, 25 }, "BrushX="); // (Int field) Brush size X
-		sideSection[10] = new IntInputField(layer, nullptr, 1, 9, "1", { 2, 26 }, "BrushY="); // (Int field) Brush size Y
+		sideSection[0] = new IntInputField(layer, UpdateBrush, 0, 255, "255", Point( 2, 5 ), "R="); // (Int field) Foreground R
+		sideSection[1] = new IntInputField(layer, UpdateBrush, 0, 255, "255", Point( 2, 6 ), "G="); // (Int field) Foreground G
+		sideSection[2] = new IntInputField(layer, UpdateBrush, 0, 255, "255", Point( 2, 7 ), "B="); // (Int field) Foreground B
+		sideSection[3] = new IntInputField(layer, UpdateBrush, 0, 255, "255", Point( 2, 8 ), "A="); // (Int field) Foreground A
+		sideSection[4] = new IntInputField(layer, UpdateBrush, 0, 255, "0", Point( 2, 13 ), "R="); // (Int field) Background R
+		sideSection[5] = new IntInputField(layer, UpdateBrush, 0, 255, "0", Point( 2, 14 ), "G="); // (Int field) Background G
+		sideSection[6] = new IntInputField(layer, UpdateBrush, 0, 255, "0", Point( 2, 15 ), "B="); // (Int field) Background B
+		sideSection[7] = new IntInputField(layer, UpdateBrush, 0, 255, "0", Point( 2, 16 ), "A="); // (Int field) Background A
+		sideSection[8] = new StringInputField(layer, UpdateBrush, { Characters_All }, { 2, 20 }, "Char=", 1, "#", true); // (String field) Character
+		sideSection[9] = new IntInputField(layer, UpdateBrush, 1, 9, "1", { 2, 25 }, "BrushX="); // (Int field) Brush size X
+		sideSection[10] = new IntInputField(layer, UpdateBrush, 1, 9, "1", { 2, 26 }, "BrushY="); // (Int field) Brush size Y
 		sideSection[11] = new Button(layer, ResetBrushSize, kReturn, { 2, 27 }, "Reset Pos"); // (Button) Reset brush position
-		sideSection[12] = new Switch(layer, NULL, kReturn, { 2, 28 }, "Fore Tool", true); // (Switch) Foreground switch
-		sideSection[13] = new Switch(layer, NULL, kReturn, { 2, 29 }, "Back Tool", true); // (Switch) Background switch
-		sideSection[14] = new Switch(layer, NULL, kReturn, { 2, 30 }, "Char Tool", true); // (Switch) Character switch
-		sideSection[15] = new IntInputField(layer, nullptr, 1, 3, "1", { 2, 34 }, "Back=", true); // (Int field) Canvas background
+		sideSection[12] = new Switch(layer, nullptr, kReturn, { 2, 28 }, "Fore Tool", true); // (Switch) Foreground switch
+		sideSection[13] = new Switch(layer, nullptr, kReturn, { 2, 29 }, "Back Tool", true); // (Switch) Background switch
+		sideSection[14] = new Switch(layer, nullptr, kReturn, { 2, 30 }, "Char Tool", true); // (Switch) Character switch
+		sideSection[15] = new IntInputField(layer, SetBackground, 1, 3, "1", { 2, 34 }, "Back=", true); // (Int field) Canvas background
 		// Canvas
 		canvas = new Canvas(
 			UPoint(((IntInputField*)topSection[3])->number, ((IntInputField*)topSection[4])->number), // Canvas size
-			Point(13, 4), // Canvas position
+			Point(14, 4), // Canvas position
 			((IntInputField*)sideSection[15])->number, // Background type
 			UPoint(((IntInputField*)sideSection[9])->number, ((IntInputField*)sideSection[10])->number), // Brush size
 			CellA(
@@ -258,7 +298,7 @@ namespace UI
 		layer->AddObject(&backgroundFrame);
 		settingsFrame.pos = Point(2, 24);
 		settingsFrame.textures.resize(9);
-		settingsFrame.textures[0].Write({"Background"}, RGBA(150 ,150, 150, 255), RGBA(0, 0, 0, 0), Point(0, 0)); // Text
+		settingsFrame.textures[0].Write({"Other"}, RGBA(150 ,150, 150, 255), RGBA(0, 0, 0, 0), Point(0, 0)); // Text
 		settingsFrame.textures[1].Simple(UPoint(1, 1), CellA('#', RGBA(150 ,150, 150, 255)), Point(0, 1)); // Up-left corner
 		settingsFrame.textures[2].Simple(UPoint(1, 1), CellA('#', RGBA(150 ,150, 150, 255)), Point(10, 1)); // Up-right corner
 		settingsFrame.textures[3].Simple(UPoint(1, 1), CellA('#', RGBA(150 ,150, 150, 255)), Point(0, 8)); // Bottom-left corner
@@ -270,7 +310,7 @@ namespace UI
 		layer->AddObject(&settingsFrame);
 		backgroundSelectorFrame.pos = Point(2, 37);
 		backgroundSelectorFrame.textures.resize(1);
-		backgroundSelectorFrame.textures[0].File("assets/backgroundSelectorFrame.kcget", Point(0, 0));
+		backgroundSelectorFrame.textures[0].File("assets/backgroundOptions.ktecht", Point(0, 0));
 		layer->AddObject(&backgroundSelectorFrame);
 		// Input handlers
 		Input::RegisterHandler(kReturn, DrawToCanvas, true); // Draw to canvas
