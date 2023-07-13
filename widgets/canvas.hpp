@@ -88,6 +88,8 @@ struct Canvas : public Widget
 		if (!selected)
 			return;
 
+		bool drew = false;
+
 		// Draw
 		for (size_t y = 0; y < obj.textures[10].size.y; y++)
 		{
@@ -101,6 +103,8 @@ struct Canvas : public Widget
 				if (fx < 0 || fx >= obj.textures[1].t[fy].size())
 					continue;
 
+				drew = true;
+
 				if (fore)
 					obj.textures[1].t[fy][fx].f = obj.textures[10].value.f;
 				if (back)
@@ -110,8 +114,9 @@ struct Canvas : public Widget
 			}
 		}
 
-		// Play sound effect.
-		drawSFX.Play();
+		// Play sound effect only if actually drew.
+		if (drew)
+			drawSFX.Play();
 	}
 
 	void UpdateBrush(Engine::UPoint size, Engine::CellA value)
@@ -154,11 +159,9 @@ struct Canvas : public Widget
 		obj.textures[10].pos = Engine::Point( size.x / 2 + obj.textures[10].size.x / 2 + 1, size.y / 2 + obj.textures[10].size.y / 2 + 1);
 	}
 
-	bool Import(const std::string& fileName)
+	void Import(const std::string& fileName)
 	{
 		Resize(obj.textures[1].File(fileName, Engine::Point(1, 1)));
-
-		return true;
 	}
 
 	void Export(const std::string& fileName)

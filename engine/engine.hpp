@@ -118,7 +118,7 @@ namespace Engine
 		// Returns true if the last input is a number
 		bool IsNum();
 		// Returns the last value as a number
-		uint8_t Num();
+		uint8_t GetNum();
 	}
 
 	// Time management; invocations, tps, fps...
@@ -255,19 +255,23 @@ namespace Engine
 		void Simple(UPoint size, CellA value, Point position);
 		// [Complex] Create a rectangle.
 		void Rectangle(UPoint size, CellA value, Point position);// Load from a file.
-		// [Complex] Load from a file. Returns the new size of the texture ({0, 0} if failed to open the file).
+		// [Complex] Load from a file.
 		Engine::UPoint File(const std::string& fileName, Point position);
 		// [Complex] Create a texture by writing it (limited to single foreground and background RGBA values)
 		void Write(const std::vector<std::string>& stringVector, RGBA frgba, RGBA brgba, Point position);
-		// Change all the cells' values
+		// [Simple & Complex] Resize the texture, keeps previous values in the given size.
+		// `UPoint newSize` - The new rectangle size of the texture.
+		// `CellA newValue` - The value which only new cells will be set to. 
+		void Resize(UPoint newSize, CellA newValue);
+		// [Simple & Complex] Change all the cells' values
 		void SetCell(CellA value);
-		// Change all the cells' foreground color values
+		// [Simple & Complex] Change all the cells' foreground color values
 		void SetForeground(RGBA value);
-		// Change all the cells' background color values
+		// [Simple & Complex] Change all the cells' background color values
 		void SetBackground(RGBA value);
-		// Change all the cells' character values
+		// [Simple & Complex] Change all the cells' character values
 		void SetCharacter(char value);
-		
+		// [Complex] Export the texture to a file (existent or non existent), uses standard ktech texture file format.
 		void ExportToFile(const std::string& fileName);
 	};
 
@@ -484,4 +488,7 @@ namespace Engine
 	void ResetTerminal();
 	// Print the final image to the console.
 	void Print();
+
+	// Prints text to the terminal, text will only appear if you are not printing.
+	void Log(const std::string& text, RGB color);
 };
