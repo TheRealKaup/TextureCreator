@@ -315,7 +315,6 @@ namespace UI
 int main()
 {
 	PrepareTerminal(UPoint(displaySizeX, displaySizeY));
-	std::thread t_inputLoop(Input::Loop);
 
 	// Map, layer and camera
 	Map map;
@@ -329,7 +328,7 @@ int main()
 	UI::Initialize(&layer);
 
 	// Loop
-	for(Time::tps = 12; running; Time::StartThisTick())
+	while (running)
 	{
 		// Callback functions calling
 		Input::Call(); // Input events
@@ -340,8 +339,11 @@ int main()
 		map.cameras[map.activeCameraI]->Render(map.layers);
 		map.cameras[map.activeCameraI]->Draw({ 0, 0 }, 0, 0, 0, 0);
 		Print();
-
-		Time::WaitUntilNextTick();
+		
+		Input::Get();
 	}
+	
+	ResetTerminal();
+
 	exit(0);
 }
