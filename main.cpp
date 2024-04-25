@@ -329,7 +329,7 @@ int main()
 	UI::Initialize(&layer);
 
 	// Loop
-	for(Time::tps = 60; running; Time::StartThisTick())
+	for(Time::tps = 12; running; Time::StartThisTick())
 	{
 		// Callback functions calling
 		Input::Call(); // Input events
