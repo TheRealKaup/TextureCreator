@@ -4,7 +4,6 @@ project(game)
 
 add_executable(${PROJECT_NAME}
     main.cpp
-    engine/audio.cpp
     engine/camera.cpp
     engine/collider.cpp
     engine/collision.cpp

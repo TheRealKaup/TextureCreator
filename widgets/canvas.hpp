@@ -7,9 +7,6 @@ struct Canvas : public Widget
 
 	Engine::Object brushDeprecated;
 
-	Engine::AudioSource canvasResizeSFX;
-	Engine::AudioSource drawSFX;
-
 	Engine::RGBA selectedRGBA = Engine::RGBA(255, 255, 255, 255);
 	Engine::RGBA unselectedRGBA = Engine::RGBA(150, 150, 150, 255);
 
@@ -77,9 +74,6 @@ struct Canvas : public Widget
 		// Right frame
 		obj.textures[9].size.y = size.y;
 		obj.textures[9].pos.x = size.x + 1;
-
-		// Play sound effect.
-		canvasResizeSFX.Play(0, 0, 0, 0.5f);
 	}
 
 	void Draw(bool fore, bool back, bool character)
@@ -113,10 +107,6 @@ struct Canvas : public Widget
 					obj.textures[1].t[fy][fx].c = obj.textures[10].value.c;
 			}
 		}
-
-		// Play sound effect only if actually drew.
-		if (drew)
-			drawSFX.Play();
 	}
 
 	void UpdateBrush(Engine::UPoint size, Engine::CellA value)
@@ -216,12 +206,7 @@ struct Canvas : public Widget
 
 		layer->AddObject(&obj);
 
-		// Audio sources
-		canvasResizeSFX.LoadWavFile("assets/canvasResize.wav");
-		drawSFX.LoadWavFile("assets/draw.wav");
-
 		// Input handlers
-		// Engine::Input::RegisterHandler(kReturn, std::bind(&Canvas::Draw, this, true, true, true), true);
 		Engine::Input::RegisterHandler("w", std::bind(&Canvas::MoveBrush, this), true);
 		Engine::Input::RegisterHandler("a", std::bind(&Canvas::MoveBrush, this), true);
 		Engine::Input::RegisterHandler("s", std::bind(&Canvas::MoveBrush, this), true);

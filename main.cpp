@@ -38,9 +38,6 @@ namespace UI
 	uint8_t topState = 0;
 	uint8_t sideState = 0;
 
-	// Audio
-	AudioSource widgetSelectionSFX;
-
 	// Widgets
 	Canvas* canvas;
 	Widget* topSection[6];
@@ -208,10 +205,6 @@ namespace UI
 				break;
 			}
 		}
-
-		// Play widget selection sound effect
-		if (moved)
-			widgetSelectionSFX.Play();
 	}
 
 	void Initialize(Layer* layer)
@@ -258,8 +251,6 @@ namespace UI
 					((IntInputField*)sideSection[7])->number)), // Background alpha),
 			layer);
 		canvas->Select();
-		// Audio
-		widgetSelectionSFX.LoadWavFile("assets/widgetsMove.wav"); // Widget selection sound effect
 		// Frames
 		mainFrame.textures.resize(3);
 		mainFrame.textures[0].Write( // Logo
@@ -323,7 +314,6 @@ namespace UI
 
 int main()
 {
-	InitializeAudio();
 	PrepareTerminal(UPoint(displaySizeX, displaySizeY));
 	std::thread t_inputLoop(Input::Loop);
 
@@ -353,8 +343,5 @@ int main()
 
 		Time::WaitUntilNextTick();
 	}
-
-	TerminateAudio();
-	ResetTerminal();
 	exit(0);
 }

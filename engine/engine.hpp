@@ -41,7 +41,6 @@ namespace Engine
 	struct Layer;
 	struct Camera;
 	struct Map;
-	struct AudioSource;
 	struct TimePoint;
 
 	inline bool running = true;
@@ -371,66 +370,6 @@ namespace Engine
 		bool RemoveObject(Object* object);
 	};
 	
-	struct AudioSource
-	{
-		// PortAudio's opaque stream pointer
-		PaStream* stream;
-		// Current sample
-		uint32_t cur = 0UL;
-		// Amount of samples
-		uint32_t frames = 0UL;
-		// The end point in samples
-		uint32_t endpointToPlay = 0UL;
-		// Loops to play
-		uint32_t loopsToPlay = 0UL;
-		// Start point to play in samples
-		uint32_t startPoint = 0UL;
-		// Volume
-		float volume = 1.0f;
-		// Is playing
-		bool playing = false;
-
-		// Note that these variables don't do anything if changed, but can be used to access the data about the sound.
-
-		// The size of the .wav file itself (in bytes).
-		uint32_t fileSize = 0UL;
-		// The amount of channels used to play the sound.
-		uint8_t channels = 0U;
-		// The sample rate (per second).
-		uint32_t sampleRate = 0UL;
-		// The byte rate (per second).
-		uint32_t byteRate = 0UL;
-		// I honestly don't know what this is.
-		uint8_t blockAlign = 0U;
-		// The size of a sample (in... bits).
-		uint16_t bitsPerSample = 0U;
-		// The size of the data within the file (in bytes).
-		uint32_t dataSize = 0UL;
-
-		// The audio in bytes after it was loaded.
-		int16_t* data = nullptr;
-
-		// Default constructer, doesn't do anything.
-		AudioSource();
-		// Load .wav file.
-		// `fileName` - the name of the file.
-		// Returns true if succeeded
-		bool LoadWavFile(const std::string& fileName);
-
-		// Play the sound from the beginning.
-		// start - the start point in samples. 0 means the first sample.
-		// length - the length in samples. 0 means the entire sound.
-		// loops - how many times to loop. 0 and 1 mean play once. 
-		// a vector of floats between 0.0f to 1.0f, each element will be the volume of each corresponding channel.
-		void Play(uint32_t start = 0, uint32_t length = 0, uint16_t loops = 0, float volume = 1.0f);
-		// Pause playing the sound.
-		void Pause();
-		// Resume playing the sound.
-		void Resume();
-		// Stop playing the sound.
-		void Stop();
-	};
-	
 	struct Camera
 	{
 		std::function<void()> OnTick = nullptr;
@@ -478,10 +417,6 @@ namespace Engine
 	// This is used by the engine when you load a map.
 	Layer* StoreLayer(Layer layer);
 
-	// Prepare the audio library (AudioPort) for AudioSources.
-	void InitializeAudio();
-	// Terminate (deallocate) the audio library (PortAudio).
-	void TerminateAudio();
 	// Prepare the terminal for printing and receiving input
 	void PrepareTerminal(UPoint imageSize);
 	// Reset the terminal before exiting the game (turn in back to normal).
