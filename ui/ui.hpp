@@ -149,7 +149,7 @@ struct TextureCreatorUI : KTech::UI
 
 		Frame m_frame1, m_frame2, m_frame3;
 
-		WidgetIndex m_curWidget;
+		WidgetIndex m_curWidget = wi_foregroundR;
 
 		SideSection(TextureCreatorUI* const textureCreatorUI, KTech::Engine& engine, KTech::ID<KTech::UI> parentUI, KTech::Point pos);
 
