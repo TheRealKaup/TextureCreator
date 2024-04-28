@@ -20,12 +20,26 @@
 
 #include "texturecreator.hpp"
 
+#include <cstring>
+
 int main(int argc, char *argv[])
 {
-	using namespace TextureCreator;
+	if (argc > 1)
+	{
+		for (size_t i = 1; i < argc; i++)
+		{
+			if (std::strcmp("--help", argv[i]) == 0)
+			{
+				TextureCreator::PrintHelp();
+				exit(0);
+			}
+		}
+	}
 	
+	TextureCreator textureCreator;
+
 	if (argc == 2) // Import file
-		ui.m_canvas.Import(argv[1]);
+		textureCreator.ui.m_canvas.Import(argv[1]);
 	else if (argc == 3) // Set canvas size
 	{
 		KTech::UPoint size;
@@ -47,19 +61,19 @@ int main(int argc, char *argv[])
 			size.y = TextureCreatorUI::DefaultValues::maxCanvasSize.y;
 		else if (size.y == 0)
 			size.y = 1;
-		ui.m_canvas.Resize(size);
+		textureCreator.ui.m_canvas.Resize(size);
 	}
 
-	while (engine.running)
+	while (textureCreator.engine.running)
 	{
-		engine.input.CallHandlers();
-		engine.time.CallInvocations();
-		engine.memory.CallOnTicks();
+		textureCreator.engine.input.CallHandlers();
+		textureCreator.engine.time.CallInvocations();
+		textureCreator.engine.memory.CallOnTicks();
 
-		ui.Render();
-		engine.output.Draw(ui.m_image);
-		engine.output.Print();
+		textureCreator.ui.Render();
+		textureCreator.engine.output.Draw(textureCreator.ui.m_image);
+		textureCreator.engine.output.Print();
 
-		engine.time.WaitUntilNextTick();
+		textureCreator.engine.time.WaitUntilNextTick();
 	}
 }

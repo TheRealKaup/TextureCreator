@@ -6,7 +6,6 @@
 #include "../ktech/widgets/stringfield.hpp"
 #include "../ktech/widgets/switch.hpp"
 
-#include "canvas.hpp"
 #include "frame.hpp"
 
 struct TextureCreatorUI : KTech::UI
@@ -18,7 +17,58 @@ struct TextureCreatorUI : KTech::UI
 		side
 	};
 
-	// Widgets
+	struct Canvas : public KTech::Widget
+	{
+		enum class Background {
+			black,
+			red,
+			transparent
+		};
+
+		enum TextureIndex {
+			ti_background,
+			ti_canvas,
+			ti_brush,
+			TEXTURES_SIZE
+		};
+
+		TextureCreatorUI* const textureCreatorUI;
+
+		KTech::UPoint m_size;
+		Background m_background;
+		KTech::RGBA m_selectedRGBA = KTech::RGBA(255, 255, 255, 255);
+		KTech::RGBA m_unselectedRGBA = KTech::RGBA(150, 150, 150, 255);
+
+		Frame m_frame;
+
+		bool m_foregroundTool, m_backgroundTool, m_characterTool;
+
+		Canvas(TextureCreatorUI* const textureCreatorUI,
+			KTech::Engine& engine,
+			KTech::ID<KTech::UI> parentUI,
+			KTech::Point position,
+			KTech::UPoint size,
+			Background background,
+			KTech::UPoint brushSize,
+			KTech::CellA brushValue,
+			bool foreTool,
+			bool backTool,
+			bool charTool);
+
+		void SetBackground(Background background);
+		void Resize(KTech::UPoint size);
+		void Draw();
+		void EraseFully();
+		void EraseAccordingToToggledTools();
+
+		void SetBrushSize(KTech::UPoint size);
+		void SetBrushValue(KTech::CellA value);
+		void MoveBrush();
+
+		void Import(const std::string& fileName);
+		void Export(const std::string& fileName);
+	};
+
 	struct TopSection : KTech::Widget
 	{
 		enum WidgetIndex : uint8_t {
@@ -31,6 +81,8 @@ struct TextureCreatorUI : KTech::UI
 			WIDGETS_SIZE
 		};
 
+		TextureCreatorUI* const textureCreatorUI;
+
 		Button m_exit;
 		Button m_import;
 		Button m_export;
@@ -40,7 +92,7 @@ struct TextureCreatorUI : KTech::UI
 
 		WidgetIndex m_curWidget = wi_exit;
 
-		TopSection(KTech::Engine& engine, KTech::ID<KTech::UI> parentUI, KTech::Point pos);
+		TopSection(TextureCreatorUI* const textureCreatorUI, KTech::Engine& engine, KTech::ID<KTech::UI> parentUI, KTech::Point pos);
 
 		void MoveRight();
 		void MoveLeft();
@@ -51,7 +103,7 @@ struct TextureCreatorUI : KTech::UI
 	};
 
 	struct SideSection : KTech::Widget
-	{
+	{		
 		enum WidgetIndex : uint8_t {
 			wi_foregroundR,
 			wi_foregroundG,
@@ -77,6 +129,8 @@ struct TextureCreatorUI : KTech::UI
 			TEXTURES_SIZE
 		};
 
+		TextureCreatorUI* const textureCreatorUI;
+
 		IntField m_foregroundR;
 		IntField m_foregroundG;
 		IntField m_foregroundB;
@@ -97,7 +151,7 @@ struct TextureCreatorUI : KTech::UI
 
 		WidgetIndex m_curWidget;
 
-		SideSection(KTech::Engine& engine, KTech::ID<KTech::UI> parentUI, KTech::Point pos);
+		SideSection(TextureCreatorUI* const textureCreatorUI, KTech::Engine& engine, KTech::ID<KTech::UI> parentUI, KTech::Point pos);
 
 		void MoveDown();
 		void MoveUp();

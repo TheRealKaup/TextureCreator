@@ -1,7 +1,7 @@
-#include "canvas.hpp"
-#include "../texturecreator.hpp"
+#include "ui.hpp"
 
-Canvas::Canvas(KTech::Engine& p_engine,
+TextureCreatorUI::Canvas::Canvas(TextureCreatorUI* const p_textureCreatorUI,
+	KTech::Engine& p_engine,
 	KTech::ID<KTech::UI> p_parentUI,
 	KTech::Point p_pos,
 	KTech::UPoint p_size,
@@ -9,8 +9,8 @@ Canvas::Canvas(KTech::Engine& p_engine,
 	KTech::UPoint p_brushSize,
 	KTech::CellA p_brushValue,
 	bool p_foreTool, bool p_backTool, bool p_charTool)
-	: Widget(p_engine, p_parentUI, p_pos), m_foregroundTool(p_foreTool), m_backgroundTool(p_backTool), m_characterTool(p_charTool), m_size(p_size),
-	m_frame(p_engine, p_parentUI, p_pos, KTech::UPoint(p_size.x + 2, p_size.y + 2))
+	: Widget(p_engine, p_parentUI, p_pos), textureCreatorUI(p_textureCreatorUI), m_foregroundTool(p_foreTool), m_backgroundTool(p_backTool),
+	m_characterTool(p_charTool), m_size(p_size), m_frame(p_engine, p_parentUI, p_pos, KTech::UPoint(p_size.x + 2, p_size.y + 2))
 {
 	// Textures
 	m_textures.resize(TEXTURES_SIZE);
@@ -30,7 +30,7 @@ Canvas::Canvas(KTech::Engine& p_engine,
 	m_callbacksGroup->AddCallback(engine.input.RegisterCallback(KTech::Keys::delete_, std::bind(&Canvas::EraseAccordingToToggledTools, this)));
 }
 
-void Canvas::SetBackground(Background p_background)
+void TextureCreatorUI::Canvas::SetBackground(Background p_background)
 {
 	m_background = p_background;
 	if (m_background == Background::black)
@@ -48,7 +48,7 @@ void Canvas::SetBackground(Background p_background)
 	}
 }
 
-void Canvas::Resize(KTech::UPoint p_size)
+void TextureCreatorUI::Canvas::Resize(KTech::UPoint p_size)
 {
 	// If the size isn'm_t changed then don'm_t proceed.
 	if (m_size.x == p_size.x && m_size.y == p_size.y)
@@ -67,11 +67,11 @@ void Canvas::Resize(KTech::UPoint p_size)
 	// Reset brush pos
 	m_textures[ti_brush].m_rPos = KTech::Point( m_size.x / 2 + m_textures[ti_brush].m_size.x / 2 + 1, m_size.y / 2 + m_textures[ti_brush].m_size.y / 2 + 1);
 	// Update ui
-	TextureCreator::ui.m_topSection.m_canvasSizeX.ChangeValue(std::to_string(m_size.x));
-	TextureCreator::ui.m_topSection.m_canvasSizeY.ChangeValue(std::to_string(m_size.y));
+	textureCreatorUI->m_topSection.m_canvasSizeX.ChangeValue(std::to_string(m_size.x));
+	textureCreatorUI->m_topSection.m_canvasSizeY.ChangeValue(std::to_string(m_size.y));
 }
 
-void Canvas::Draw()
+void TextureCreatorUI::Canvas::Draw()
 {
 	// Only draw if canvas is m_selected
 	if (!m_selected)
@@ -100,7 +100,7 @@ void Canvas::Draw()
 	}
 }
 
-void Canvas::EraseFully()
+void TextureCreatorUI::TextureCreatorUI::Canvas::EraseFully()
 {
 	for (size_t y = 0; y < m_textures[ti_brush].m_size.y; y++)
 	{
@@ -121,7 +121,7 @@ void Canvas::EraseFully()
 	}
 }
 
-void Canvas::EraseAccordingToToggledTools()
+void TextureCreatorUI::Canvas::EraseAccordingToToggledTools()
 {
 	for (size_t y = 0; y < m_textures[ti_brush].m_size.y; y++)
 	{
@@ -145,17 +145,17 @@ void Canvas::EraseAccordingToToggledTools()
 	}
 }
 
-void Canvas::SetBrushSize(KTech::UPoint p_size)
+void TextureCreatorUI::Canvas::SetBrushSize(KTech::UPoint p_size)
 {
 	m_textures[ti_brush].m_size = p_size;
 }
 
-void Canvas::SetBrushValue(KTech::CellA p_value)
+void TextureCreatorUI::Canvas::SetBrushValue(KTech::CellA p_value)
 {
 	m_textures[ti_brush].m_value = p_value;
 }
 
-void Canvas::MoveBrush()
+void TextureCreatorUI::Canvas::MoveBrush()
 {
 	// Only move if canvas is m_selected
 	if (!m_selected)
@@ -184,12 +184,12 @@ void Canvas::MoveBrush()
 	}
 }
 
-void Canvas::Import(const std::string& fileName)
+void TextureCreatorUI::Canvas::Import(const std::string& fileName)
 {
 	Canvas::Resize(m_textures[ti_canvas].File(fileName, KTech::Point(1, 1)));
 }
 
-void Canvas::Export(const std::string& fileName)
+void TextureCreatorUI::Canvas::Export(const std::string& fileName)
 {
 	m_textures[ti_canvas].ExportToFile(fileName);
 }

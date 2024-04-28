@@ -3,9 +3,9 @@
 
 TextureCreatorUI::TextureCreatorUI(KTech::Engine& p_engine)
 	: KTech::UI(p_engine, TextureCreator::viewportSize),
-	m_topSection(p_engine, m_id, KTech::Point(44, 1)),
-	m_sideSection(p_engine, m_id, KTech::Point(2, 4)),
-	m_canvas(
+	m_topSection(this, p_engine, m_id, KTech::Point(44, 1)),
+	m_sideSection(this, p_engine, m_id, KTech::Point(2, 4)),
+	m_canvas(this,
 		p_engine,
 		m_id,
 		KTech::Point(14, 4),

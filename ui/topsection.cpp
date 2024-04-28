@@ -1,12 +1,11 @@
 #include "ui.hpp"
-#include "../texturecreator.hpp"
-#include "canvas.hpp"
 
-TextureCreatorUI::TopSection::TopSection(KTech::Engine& p_engine, KTech::ID<KTech::UI> p_parentUI, KTech::Point p_pos)
+TextureCreatorUI::TopSection::TopSection(TextureCreatorUI* const p_textureCreatorUI, KTech::Engine& p_engine, KTech::ID<KTech::UI> p_parentUI, KTech::Point p_pos)
 	: KTech::Widget(p_engine, p_parentUI, p_pos),
-	m_exit(p_engine, p_parentUI, TextureCreator::ExitGame, KTech::Keys::return_, KTech::Point(p_pos.x, p_pos.y), "Exit", true),
-	m_import(p_engine, p_parentUI, std::bind(&Canvas::Import, &TextureCreator::ui.m_canvas, "import.ktecht"), KTech::Keys::return_, KTech::Point(p_pos.x + 7, p_pos.y), "Import", true),
-	m_export(p_engine, p_parentUI, std::bind(&Canvas::Export, &TextureCreator::ui.m_canvas, "export.ktecht"), KTech::Keys::return_, KTech::Point(p_pos.x + 16, p_pos.y), "Export", true),
+	textureCreatorUI(p_textureCreatorUI),
+	m_exit(p_engine, p_parentUI, std::bind(&KTech::Engine::Quit, &p_engine), KTech::Keys::return_, KTech::Point(p_pos.x, p_pos.y), "Exit", true),
+	m_import(p_engine, p_parentUI, std::bind(&Canvas::Import, &p_textureCreatorUI->m_canvas, "import.ktecht"), KTech::Keys::return_, KTech::Point(p_pos.x + 7, p_pos.y), "Import", true),
+	m_export(p_engine, p_parentUI, std::bind(&Canvas::Export, &p_textureCreatorUI->m_canvas, "export.ktecht"), KTech::Keys::return_, KTech::Point(p_pos.x + 16, p_pos.y), "Export", true),
 	m_canvasSizeX(p_engine, p_parentUI, nullptr, 1, DefaultValues::maxCanvasSize.x, std::to_string(DefaultValues::canvasSize.x), KTech::Point(p_pos.x + 25, p_pos.y), "CanvasX=", true),
 	m_canvasSizeY(p_engine, p_parentUI, nullptr, 1, DefaultValues::maxCanvasSize.y, std::to_string(DefaultValues::canvasSize.y), KTech::Point(p_pos.x + 36, p_pos.y), "CanvasY=", true),
 	m_confirmCanvasSize(p_engine, p_parentUI, std::bind(&TopSection::ResizeCanvas, this), KTech::Keys::return_, KTech::Point(p_pos.x + 47, p_pos.y), "Confirm", true)
@@ -46,5 +45,5 @@ void TextureCreatorUI::TopSection::MoveLeft()
 
 void TextureCreatorUI::TopSection::ResizeCanvas()
 {
-	TextureCreator::ui.m_canvas.Resize(KTech::UPoint(m_canvasSizeX.m_number, m_canvasSizeY.m_number));
+	textureCreatorUI->m_canvas.Resize(KTech::UPoint(m_canvasSizeX.m_number, m_canvasSizeY.m_number));
 }

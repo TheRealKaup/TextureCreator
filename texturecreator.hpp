@@ -4,16 +4,18 @@
 
 #include "ui/ui.hpp"
 
-namespace TextureCreator
+struct TextureCreator
 {
-	inline constexpr KTech::UPoint viewportSize = KTech::UPoint(101, 39);
+	static constexpr KTech::UPoint viewportSize = KTech::UPoint(101, 39);
 
-	inline KTech::Engine engine(viewportSize, 24);
+	KTech::Engine engine = KTech::Engine(viewportSize, 24);
 
-	inline TextureCreatorUI ui(engine);
+	TextureCreatorUI ui = TextureCreatorUI(engine);
 
-	inline static void ExitGame()
+	inline void ExitGame()
 	{
 		engine.running = false;
 	}
-}
+
+	void static PrintHelp();
+};
