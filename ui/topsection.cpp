@@ -7,8 +7,8 @@ TextureCreatorUI::TopSection::TopSection(KTech::Engine& p_engine, KTech::ID<KTec
 	m_exit(p_engine, p_parentUI, TextureCreator::ExitGame, KTech::Keys::return_, KTech::Point(p_pos.x, p_pos.y), "Exit", true),
 	m_import(p_engine, p_parentUI, std::bind(&Canvas::Import, &TextureCreator::ui.m_canvas, "import.ktecht"), KTech::Keys::return_, KTech::Point(p_pos.x + 7, p_pos.y), "Import", true),
 	m_export(p_engine, p_parentUI, std::bind(&Canvas::Export, &TextureCreator::ui.m_canvas, "export.ktecht"), KTech::Keys::return_, KTech::Point(p_pos.x + 16, p_pos.y), "Export", true),
-	m_canvasSizeX(p_engine, p_parentUI, nullptr, 1, 84, std::to_string(DefaultValues::canvasSize.x), KTech::Point(p_pos.x + 25, p_pos.y), "CanvasX=", true),
-	m_canvasSizeY(p_engine, p_parentUI, nullptr, 1, 33, std::to_string(DefaultValues::canvasSize.y), KTech::Point(p_pos.x + 36, p_pos.y), "CanvasY=", true),
+	m_canvasSizeX(p_engine, p_parentUI, nullptr, 1, DefaultValues::maxCanvasSize.x, std::to_string(DefaultValues::canvasSize.x), KTech::Point(p_pos.x + 25, p_pos.y), "CanvasX=", true),
+	m_canvasSizeY(p_engine, p_parentUI, nullptr, 1, DefaultValues::maxCanvasSize.y, std::to_string(DefaultValues::canvasSize.y), KTech::Point(p_pos.x + 36, p_pos.y), "CanvasY=", true),
 	m_confirmCanvasSize(p_engine, p_parentUI, std::bind(&TopSection::ResizeCanvas, this), KTech::Keys::return_, KTech::Point(p_pos.x + 47, p_pos.y), "Confirm", true)
 {
 	// Widgets

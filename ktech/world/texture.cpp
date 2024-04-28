@@ -53,12 +53,13 @@ KTech::UPoint KTech::Texture::File(const std::string& p_fileName, Point p_pos)
 	if (!file.is_open())
 	{
 		Output::Log("<KTech::Texture::File()> Error! Failed to open file " + p_fileName + ".", RGB(255, 0, 0));
+		m_t.clear();
 		m_t.resize(2, std::vector<CellA>(2));
 		m_t[0][0].b = RGBA(255, 0, 220, 255);
 		m_t[1][1].b = RGBA(255, 0, 220, 255);
 		m_t[0][1].b = RGBA(0, 0, 0, 255);
 		m_t[1][0].b = RGBA(0, 0, 0, 255);
-		return UPoint(0, 0);
+		return GetSize();
 	}
 
 	Output::Log("<KTech::Texture::File()> Reading size of texture.", RGB(128, 128, 255));

@@ -39,13 +39,13 @@ struct Canvas : public KTech::Widget
 		bool charTool);
 
 	void SetBackground(Background background);
-	void Resize(KTech::UPoint _size);
+	void Resize(KTech::UPoint size);
 	void Draw();
 	void EraseFully();
 	void EraseAccordingToToggledTools();
 
 	void SetBrushSize(KTech::UPoint size);
-	void SetBrushValue(KTech::CellA m_value);
+	void SetBrushValue(KTech::CellA value);
 	void MoveBrush();
 
 	void Import(const std::string& fileName);

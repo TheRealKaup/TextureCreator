@@ -20,10 +20,36 @@
 
 #include "texturecreator.hpp"
 
-int main()
+int main(int argc, char *argv[])
 {
 	using namespace TextureCreator;
 	
+	if (argc == 2) // Import file
+		ui.m_canvas.Import(argv[1]);
+	else if (argc == 3) // Set canvas size
+	{
+		KTech::UPoint size;
+		for (size_t i = 0; argv[1][i] != 0; i++)
+		{
+			size.x *= 10;
+			size.x += argv[1][i] - '0';
+		}
+		if (size.x > TextureCreatorUI::DefaultValues::maxCanvasSize.x)
+			size.x = TextureCreatorUI::DefaultValues::maxCanvasSize.x;
+		else if (size.x == 0)
+			size.x = 1;
+		for (size_t i = 0; argv[2][i] != 0; i++)
+		{
+			size.y *= 10;
+			size.y += argv[2][i] - '0';
+		}
+		if (size.y > TextureCreatorUI::DefaultValues::maxCanvasSize.y)
+			size.y = TextureCreatorUI::DefaultValues::maxCanvasSize.y;
+		else if (size.y == 0)
+			size.y = 1;
+		ui.m_canvas.Resize(size);
+	}
+
 	while (engine.running)
 	{
 		engine.input.CallHandlers();

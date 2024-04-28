@@ -119,6 +119,7 @@ struct TextureCreatorUI : KTech::UI
 		static constexpr bool charTool = true;
 		static constexpr Canvas::Background canvasBackground = Canvas::Background::black;
 		static constexpr KTech::UPoint canvasSize = KTech::UPoint(60, 30);
+		static constexpr KTech::UPoint maxCanvasSize = KTech::UPoint(84, 33);
 	};
 
 	Canvas m_canvas;
