@@ -1,10 +1,10 @@
 #pragma once
 
-#include "ktech/ktech.hpp"
-#include "ktech/widgets/button.hpp"
-#include "ktech/widgets/intfield.hpp"
-#include "ktech/widgets/stringfield.hpp"
-#include "ktech/widgets/switch.hpp"
+#include "../ktech/ktech.hpp"
+#include "../ktech/widgets/button.hpp"
+#include "../ktech/widgets/intfield.hpp"
+#include "../ktech/widgets/stringfield.hpp"
+#include "../ktech/widgets/switch.hpp"
 
 #include "canvas.hpp"
 

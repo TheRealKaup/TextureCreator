@@ -2,7 +2,7 @@
 
 #include "ktech/ktech.hpp"
 
-#include "ui.hpp"
+#include "ui/ui.hpp"
 
 namespace TextureCreator
 {

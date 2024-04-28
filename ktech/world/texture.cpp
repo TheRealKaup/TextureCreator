@@ -264,7 +264,19 @@ void KTech::Texture::ExportToFile(const std::string& p_fileName) const
 		for (size_t x = 0; x < maxTextureSize.x; x++)
 		{
 			if (x < m_t[y].size())
-				file.write((char*)&m_t[y][x], 9);
+			{
+				char data[9];
+				data[0] = m_t[y][x].f.r;
+				data[1] = m_t[y][x].f.g;
+				data[2] = m_t[y][x].f.b;
+				data[3] = m_t[y][x].f.a;
+				data[4] = m_t[y][x].b.r;
+				data[5] = m_t[y][x].b.g;
+				data[6] = m_t[y][x].b.b;
+				data[7] = m_t[y][x].b.a;
+				data[8] = m_t[y][x].c;
+				file.write(data, 9);
+			}
 			else
 				file.write("\0\0\0\0\0\0\0\0\0", 9);
 		}

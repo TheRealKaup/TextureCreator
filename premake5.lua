@@ -13,7 +13,7 @@ project "texturecreator"
 
 	links { "KTechLibrary" }
 
-	files { "*.cpp", "*.hpp" }
+	files { "*.cpp", "*.hpp", "ui/*.cpp", "ui/*.hpp" }
 
 	filter "configurations:Debug"
 		symbols "On"

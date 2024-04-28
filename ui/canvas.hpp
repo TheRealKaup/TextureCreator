@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ktech/ktech.hpp"
+#include "../ktech/ktech.hpp"
 
 struct Canvas : public KTech::Widget
 {
