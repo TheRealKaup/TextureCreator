@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../ktech/ktech.hpp"
+#include "frame.hpp"
 
 struct Canvas : public KTech::Widget
 {
@@ -10,14 +11,21 @@ struct Canvas : public KTech::Widget
 		transparent
 	};
 
+	enum TextureIndex {
+		ti_background,
+		ti_canvas,
+		ti_brush,
+		TEXTURES_SIZE
+	};
+
 	KTech::UPoint m_size;
-
-	bool m_foregroundTool, m_backgroundTool, m_characterTool;
-
 	Background m_background;
-	
 	KTech::RGBA m_selectedRGBA = KTech::RGBA(255, 255, 255, 255);
 	KTech::RGBA m_unselectedRGBA = KTech::RGBA(150, 150, 150, 255);
+
+	Frame m_frame;
+
+	bool m_foregroundTool, m_backgroundTool, m_characterTool;
 
 	Canvas(KTech::Engine& engine,
 		KTech::ID<KTech::UI> parentUI,
@@ -29,9 +37,6 @@ struct Canvas : public KTech::Widget
 		bool foreTool,
 		bool backTool,
 		bool charTool);
-
-	virtual void RenderSelected() override;
-	virtual void RenderUnselected() override;
 
 	void SetBackground(Background background);
 	void Resize(KTech::UPoint _size);

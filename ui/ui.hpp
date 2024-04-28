@@ -71,6 +71,12 @@ struct TextureCreatorUI : KTech::UI
 			WIDGETS_SIZE
 		};
 
+		enum TextureIndex : uint8_t {
+			ti_titleForeground,
+			ti_titleBackground,
+			TEXTURES_SIZE
+		};
+
 		IntField m_foregroundR;
 		IntField m_foregroundG;
 		IntField m_foregroundB;
@@ -118,7 +124,7 @@ struct TextureCreatorUI : KTech::UI
 	Canvas m_canvas;
 	TopSection m_topSection;
 	SideSection m_sideSection;
-	KTech::Widget frames;
+	KTech::Widget m_frame;
 
 	Section m_curSection = Section::canvas;
 
