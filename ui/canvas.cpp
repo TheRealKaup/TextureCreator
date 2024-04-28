@@ -26,6 +26,8 @@ Canvas::Canvas(KTech::Engine& p_engine,
 	m_callbacksGroup->AddCallback(engine.input.RegisterCallback("a", std::bind(&Canvas::MoveBrush, this)));
 	m_callbacksGroup->AddCallback(engine.input.RegisterCallback("s", std::bind(&Canvas::MoveBrush, this)));
 	m_callbacksGroup->AddCallback(engine.input.RegisterCallback("d", std::bind(&Canvas::MoveBrush, this)));
+	m_callbacksGroup->AddCallback(engine.input.RegisterCallback(KTech::Keys::backspace, std::bind(&Canvas::EraseFully, this)));
+	m_callbacksGroup->AddCallback(engine.input.RegisterCallback(KTech::Keys::delete_, std::bind(&Canvas::EraseAccordingToToggledTools, this)));
 }
 
 void Canvas::SetBackground(Background p_background)
@@ -75,8 +77,6 @@ void Canvas::Draw()
 	if (!m_selected)
 		return;
 
-	bool drew = false;
-
 	// Draw
 	for (size_t y = 0; y < m_textures[ti_brush].m_size.y; y++)
 	{
@@ -90,14 +90,57 @@ void Canvas::Draw()
 			if (fx < 0 || fx >= m_textures[ti_canvas].m_t[fy].size())
 				continue;
 
-			drew = true;
-
 			if (m_foregroundTool)
 				m_textures[ti_canvas].m_t[fy][fx].f = m_textures[ti_brush].m_value.f;
 			if (m_backgroundTool)
 				m_textures[ti_canvas].m_t[fy][fx].b = m_textures[ti_brush].m_value.b;
 			if (m_characterTool)
 				m_textures[ti_canvas].m_t[fy][fx].c = m_textures[ti_brush].m_value.c;
+		}
+	}
+}
+
+void Canvas::EraseFully()
+{
+	for (size_t y = 0; y < m_textures[ti_brush].m_size.y; y++)
+	{
+		for (size_t x = 0; x < m_textures[ti_brush].m_size.x; x++)
+		{
+			uint32_t fy = m_textures[ti_brush].m_rPos.y - 1 + y;
+			uint32_t fx = m_textures[ti_brush].m_rPos.x - 1 + x;
+
+			if (fy < 0 || fy >= m_textures[ti_canvas].m_t.size())
+				break;
+			if (fx < 0 || fx >= m_textures[ti_canvas].m_t[fy].size())
+				continue;
+
+			m_textures[ti_canvas].m_t[fy][fx].f = KTech::RGBAColors::transparent;
+			m_textures[ti_canvas].m_t[fy][fx].b = KTech::RGBAColors::transparent;
+			m_textures[ti_canvas].m_t[fy][fx].c = ' ';
+		}
+	}
+}
+
+void Canvas::EraseAccordingToToggledTools()
+{
+	for (size_t y = 0; y < m_textures[ti_brush].m_size.y; y++)
+	{
+		for (size_t x = 0; x < m_textures[ti_brush].m_size.x; x++)
+		{
+			uint32_t fy = m_textures[ti_brush].m_rPos.y - 1 + y;
+			uint32_t fx = m_textures[ti_brush].m_rPos.x - 1 + x;
+
+			if (fy < 0 || fy >= m_textures[ti_canvas].m_t.size())
+				break;
+			if (fx < 0 || fx >= m_textures[ti_canvas].m_t[fy].size())
+				continue;
+
+			if (m_foregroundTool)
+				m_textures[ti_canvas].m_t[fy][fx].f = KTech::RGBAColors::transparent;
+			if (m_backgroundTool)
+				m_textures[ti_canvas].m_t[fy][fx].b = KTech::RGBAColors::transparent;
+			if (m_characterTool)
+				m_textures[ti_canvas].m_t[fy][fx].c = ' ';
 		}
 	}
 }

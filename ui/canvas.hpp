@@ -41,6 +41,8 @@ struct Canvas : public KTech::Widget
 	void SetBackground(Background background);
 	void Resize(KTech::UPoint _size);
 	void Draw();
+	void EraseFully();
+	void EraseAccordingToToggledTools();
 
 	void SetBrushSize(KTech::UPoint size);
 	void SetBrushValue(KTech::CellA m_value);
