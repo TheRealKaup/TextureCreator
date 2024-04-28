@@ -8,10 +8,8 @@ Canvas::Canvas(KTech::Engine& p_engine,
 	KTech::UPoint p_brushSize,
 	KTech::CellA p_brushValue,
 	bool p_foreTool, bool p_backTool, bool p_charTool)
-	: Widget(p_engine, p_parentUI, p_pos), m_foregroundTool(p_foreTool), m_backgroundTool(p_backTool), m_characterTool(p_charTool)
+	: Widget(p_engine, p_parentUI, p_pos), m_foregroundTool(p_foreTool), m_backgroundTool(p_backTool), m_characterTool(p_charTool), m_size(p_size)
 {
-	m_size = p_size;
-
 	// Textures
 	m_textures.resize(11);
 	// Background
@@ -108,6 +106,9 @@ void Canvas::Resize(KTech::UPoint p_size)
 	// Right frame
 	m_textures[9].m_size.y = m_size.y;
 	m_textures[9].m_rPos.x = m_size.x + 1;
+
+	// Reset brush pos
+	m_textures[10].m_rPos = KTech::Point( m_size.x / 2 + m_textures[10].m_size.x / 2 + 1, m_size.y / 2 + m_textures[10].m_size.y / 2 + 1);
 }
 
 void Canvas::Draw()
@@ -180,11 +181,6 @@ void Canvas::MoveBrush()
 		if (m_textures[10].m_rPos.x < (int32_t)m_size.x)
 			m_textures[10].m_rPos.x++;
 	}
-}
-
-void Canvas::ResetBrushPos()
-{
-	m_textures[10].m_rPos = KTech::Point( m_size.x / 2 + m_textures[10].m_size.x / 2 + 1, m_size.y / 2 + m_textures[10].m_size.y / 2 + 1);
 }
 
 void Canvas::Import(const std::string& fileName)

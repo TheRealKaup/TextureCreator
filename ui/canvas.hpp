@@ -12,12 +12,12 @@ struct Canvas : public KTech::Widget
 
 	KTech::UPoint m_size;
 
-	Background m_background;
+	bool m_foregroundTool, m_backgroundTool, m_characterTool;
 
+	Background m_background;
+	
 	KTech::RGBA m_selectedRGBA = KTech::RGBA(255, 255, 255, 255);
 	KTech::RGBA m_unselectedRGBA = KTech::RGBA(150, 150, 150, 255);
-
-	bool m_foregroundTool, m_backgroundTool, m_characterTool;
 
 	Canvas(KTech::Engine& engine,
 		KTech::ID<KTech::UI> parentUI,
@@ -40,7 +40,6 @@ struct Canvas : public KTech::Widget
 	void SetBrushSize(KTech::UPoint size);
 	void SetBrushValue(KTech::CellA m_value);
 	void MoveBrush();
-	void ResetBrushPos();
 
 	void Import(const std::string& fileName);
 	void Export(const std::string& fileName);

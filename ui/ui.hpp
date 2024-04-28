@@ -64,7 +64,6 @@ struct TextureCreatorUI : KTech::UI
 			wi_character,
 			wi_brushSizeX,
 			wi_brushSizeY,
-			wi_resetBrushPos,
 			wi_toggleForeground,
 			wi_toggleBackground,
 			wi_toggleCharacter,
@@ -83,7 +82,6 @@ struct TextureCreatorUI : KTech::UI
 		StringField m_character;
 		IntField m_brushSizeX;
 		IntField m_brushSizeY;
-		Button m_resetBrushPos;
 		Switch m_toggleForeground;
 		Switch m_toggleBackground;
 		Switch m_toggleCharacter;

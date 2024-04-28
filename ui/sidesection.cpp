@@ -14,14 +14,13 @@ TextureCreatorUI::SideSection::SideSection(KTech::Engine& p_engine, KTech::ID<KT
 	m_character(p_engine, p_parentUI, std::bind(&SideSection::SetBrushValue, this), { keyrange_all }, KTech::Point( p_pos.x, p_pos.y + 14 ), "Char=", 1, {DefaultValues::brushValue.c}, true),
 	m_brushSizeX(p_engine, p_parentUI, std::bind(&SideSection::SetBrushSize, this), 1, 9, std::to_string(DefaultValues::brushSize.x), KTech::Point( p_pos.x, p_pos.y + 18 ), "BrushX="),
 	m_brushSizeY(p_engine, p_parentUI, std::bind(&SideSection::SetBrushSize, this), 1, 9, std::to_string(DefaultValues::brushSize.y), KTech::Point( p_pos.x, p_pos.y + 19 ), "BrushY="),
-	m_resetBrushPos(p_engine, p_parentUI, std::bind(&Canvas::ResetBrushPos, &TextureCreator::ui.m_canvas), KTech::Keys::return_, KTech::Point(p_pos.x, p_pos.y + 20), "Reset Pos"),
-	m_toggleForeground(p_engine, p_parentUI, std::bind(&SideSection::ToggleForeground, this), KTech::Keys::return_, KTech::Point(p_pos.x, p_pos.y + 21), "Fore Tool", DefaultValues::foreTool),
-	m_toggleBackground(p_engine, p_parentUI, std::bind(&SideSection::ToggleBackground, this), KTech::Keys::return_, KTech::Point(p_pos.x, p_pos.y + 22), "Back Tool", DefaultValues::backTool),
-	m_toggleCharacter(p_engine, p_parentUI, std::bind(&SideSection::ToggleCharacter, this), KTech::Keys::return_, KTech::Point(p_pos.x, p_pos.y + 23), "Char Tool", DefaultValues::charTool),
-	m_canvasBackground(p_engine, p_parentUI, std::bind(&SideSection::SetBackground, this), 0, 2, std::to_string((uint8_t)DefaultValues::canvasBackground), KTech::Point(p_pos.x, p_pos.y + 27), "Back=", true),
+	m_toggleForeground(p_engine, p_parentUI, std::bind(&SideSection::ToggleForeground, this), KTech::Keys::return_, KTech::Point(p_pos.x, p_pos.y + 20), "Fore Tool", DefaultValues::foreTool),
+	m_toggleBackground(p_engine, p_parentUI, std::bind(&SideSection::ToggleBackground, this), KTech::Keys::return_, KTech::Point(p_pos.x, p_pos.y + 21), "Back Tool", DefaultValues::backTool),
+	m_toggleCharacter(p_engine, p_parentUI, std::bind(&SideSection::ToggleCharacter, this), KTech::Keys::return_, KTech::Point(p_pos.x, p_pos.y + 22), "Char Tool", DefaultValues::charTool),
+	m_canvasBackground(p_engine, p_parentUI, std::bind(&SideSection::SetBackground, this), 0, 2, std::to_string((uint8_t)DefaultValues::canvasBackground), KTech::Point(p_pos.x, p_pos.y + 26), "Back=", true),
 	m_frame1(p_engine, p_parentUI, KTech::Point(p_pos.x, p_pos.y), KTech::UPoint(7, 6)),
 	m_frame2(p_engine, p_parentUI, KTech::Point(p_pos.x, p_pos.y + 7), KTech::UPoint(7, 6)),
-	m_frame3(p_engine, p_parentUI, KTech::Point(p_pos.x, p_pos.y + 18), KTech::UPoint(11, 8))
+	m_frame3(p_engine, p_parentUI, KTech::Point(p_pos.x, p_pos.y + 18), KTech::UPoint(11, 7))
 {
 	// Widgets
 	m_foregroundR.Select();
@@ -36,7 +35,6 @@ TextureCreatorUI::SideSection::SideSection(KTech::Engine& p_engine, KTech::ID<KT
 	AddWidget(m_character.m_id);
 	AddWidget(m_brushSizeX.m_id);
 	AddWidget(m_brushSizeY.m_id);
-	AddWidget(m_resetBrushPos.m_id);
 	AddWidget(m_toggleForeground.m_id);
 	AddWidget(m_toggleBackground.m_id);
 	AddWidget(m_toggleCharacter.m_id);
