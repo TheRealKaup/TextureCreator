@@ -7,6 +7,7 @@
 #include "../ktech/widgets/switch.hpp"
 
 #include "canvas.hpp"
+#include "frame.hpp"
 
 struct TextureCreatorUI : KTech::UI
 {
@@ -88,9 +89,9 @@ struct TextureCreatorUI : KTech::UI
 		Switch m_toggleCharacter;
 		IntField m_canvasBackground;
 
-		WidgetIndex m_curWidget;
+		Frame m_frame1, m_frame2, m_frame3;
 
-		// TO DO: frames
+		WidgetIndex m_curWidget;
 
 		SideSection(KTech::Engine& engine, KTech::ID<KTech::UI> parentUI, KTech::Point pos);
 
@@ -107,7 +108,7 @@ struct TextureCreatorUI : KTech::UI
 
 	struct DefaultValues
 	{
-		static constexpr KTech::CellA brushValue = KTech::CellA('#', KTech::RGBA(255, 255, 255, 255), KTech::RGBA(255, 0, 0, 80));
+		static constexpr KTech::CellA brushValue = KTech::CellA('#', KTech::RGBA(255, 255, 255, 255), KTech::RGBA(255, 0, 0, 100));
 		static constexpr KTech::UPoint brushSize = KTech::UPoint(1, 1);
 		static constexpr bool foreTool = true;
 		static constexpr bool backTool = false;
@@ -129,11 +130,4 @@ struct TextureCreatorUI : KTech::UI
 	void Left();
 	void Right();
 	void Down();
-
-	/*
-
-	void Initialize(Layer* layer)
-	{
-	}
-	*/
 };

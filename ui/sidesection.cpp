@@ -1,44 +1,27 @@
 #include "ui.hpp"
 #include "../texturecreator.hpp"
 
-/*
-// Side section
-sideSection[0] = new IntInputField(layer, UpdateBrush, 0, 255, "255", Point( 2, 5 ), "R="); // (Int field) Foreground R
-sideSection[1] = new IntInputField(layer, UpdateBrush, 0, 255, "255", Point( 2, 6 ), "G="); // (Int field) Foreground G
-sideSection[2] = new IntInputField(layer, UpdateBrush, 0, 255, "255", Point( 2, 7 ), "B="); // (Int field) Foreground B
-sideSection[3] = new IntInputField(layer, UpdateBrush, 0, 255, "255", Point( 2, 8 ), "A="); // (Int field) Foreground A
-sideSection[4] = new IntInputField(layer, UpdateBrush, 0, 255, "0", Point( 2, 13 ), "R="); // (Int field) Background R
-sideSection[5] = new IntInputField(layer, UpdateBrush, 0, 255, "0", Point( 2, 14 ), "G="); // (Int field) Background G
-sideSection[6] = new IntInputField(layer, UpdateBrush, 0, 255, "0", Point( 2, 15 ), "B="); // (Int field) Background B
-sideSection[7] = new IntInputField(layer, UpdateBrush, 0, 255, "0", Point( 2, 16 ), "A="); // (Int field) Background A
-sideSection[8] = new StringInputField(layer, UpdateBrush, { Characters_All }, { 2, 20 }, "Char=", 1, "#", true); // (String field) Character
-sideSection[9] = new IntInputField(layer, UpdateBrush, 1, 9, "1", { 2, 25 }, "BrushX="); // (Int field) Brush size X
-sideSection[10] = new IntInputField(layer, UpdateBrush, 1, 9, "1", { 2, 26 }, "BrushY="); // (Int field) Brush size Y
-sideSection[11] = new Button(layer, ResetBrushSize, kReturn, { 2, 27 }, "Reset Pos"); // (Button) Reset brush position
-sideSection[12] = new Switch(layer, nullptr, kReturn, { 2, 28 }, "Fore Tool", true); // (Switch) Foreground switch
-sideSection[13] = new Switch(layer, nullptr, kReturn, { 2, 29 }, "Back Tool", true); // (Switch) Background switch
-sideSection[14] = new Switch(layer, nullptr, kReturn, { 2, 30 }, "Char Tool", true); // (Switch) Character switch
-sideSection[15] = new IntInputField(layer, SetBackground, 1, 3, "1", { 2, 34 }, "Back=", true); // (Int field) Canvas background
-*/
-
 TextureCreatorUI::SideSection::SideSection(KTech::Engine& p_engine, KTech::ID<KTech::UI> p_parentUI, KTech::Point p_pos)
 	: Widget(p_engine, p_parentUI, p_pos),
 	m_foregroundR(p_engine, p_parentUI, std::bind(&SideSection::SetBrushValue, this), 0, 255, std::to_string(DefaultValues::brushValue.f.r), KTech::Point( p_pos.x, p_pos.y ), "R="),
 	m_foregroundG(p_engine, p_parentUI, std::bind(&SideSection::SetBrushValue, this), 0, 255, std::to_string(DefaultValues::brushValue.f.g), KTech::Point( p_pos.x, p_pos.y + 1 ), "G="),
 	m_foregroundB(p_engine, p_parentUI, std::bind(&SideSection::SetBrushValue, this), 0, 255, std::to_string(DefaultValues::brushValue.f.b), KTech::Point( p_pos.x, p_pos.y + 2 ), "B="),
 	m_foregroundA(p_engine, p_parentUI, std::bind(&SideSection::SetBrushValue, this), 0, 255, std::to_string(DefaultValues::brushValue.f.a), KTech::Point( p_pos.x, p_pos.y + 3 ), "A="),
-	m_backgroundR(p_engine, p_parentUI, std::bind(&SideSection::SetBrushValue, this), 0, 255, std::to_string(DefaultValues::brushValue.b.r), KTech::Point( p_pos.x, p_pos.y + 8 ), "R="),
-	m_backgroundG(p_engine, p_parentUI, std::bind(&SideSection::SetBrushValue, this), 0, 255, std::to_string(DefaultValues::brushValue.b.g), KTech::Point( p_pos.x, p_pos.y + 9 ), "G="),
-	m_backgroundB(p_engine, p_parentUI, std::bind(&SideSection::SetBrushValue, this), 0, 255, std::to_string(DefaultValues::brushValue.b.b), KTech::Point( p_pos.x, p_pos.y + 10 ), "B="),
-	m_backgroundA(p_engine, p_parentUI, std::bind(&SideSection::SetBrushValue, this), 0, 255, std::to_string(DefaultValues::brushValue.b.a), KTech::Point( p_pos.x, p_pos.y + 11 ), "A="),
-	m_character(p_engine, p_parentUI, std::bind(&SideSection::SetBrushValue, this), { keyrange_all }, KTech::Point( p_pos.x, p_pos.y + 15 ), "Char=", 1, {DefaultValues::brushValue.c}, true),
-	m_brushSizeX(p_engine, p_parentUI, std::bind(&SideSection::SetBrushSize, this), 1, 9, std::to_string(DefaultValues::brushSize.x), KTech::Point( p_pos.x, p_pos.y + 20 ), "BrushX="),
-	m_brushSizeY(p_engine, p_parentUI, std::bind(&SideSection::SetBrushSize, this), 1, 9, std::to_string(DefaultValues::brushSize.y), KTech::Point( p_pos.x, p_pos.y + 21 ), "BrushY="),
-	m_resetBrushPos(p_engine, p_parentUI, std::bind(&Canvas::ResetBrushPos, &TextureCreator::ui.m_canvas), KTech::Keys::return_, KTech::Point(p_pos.x, p_pos.y + 22), "Reset Pos"),
-	m_toggleForeground(p_engine, p_parentUI, std::bind(&SideSection::ToggleForeground, this), KTech::Keys::return_, KTech::Point(p_pos.x, p_pos.y + 23), "Fore Tool", DefaultValues::foreTool),
-	m_toggleBackground(p_engine, p_parentUI, std::bind(&SideSection::ToggleBackground, this), KTech::Keys::return_, KTech::Point(p_pos.x, p_pos.y + 24), "Back Tool", DefaultValues::backTool),
-	m_toggleCharacter(p_engine, p_parentUI, std::bind(&SideSection::ToggleCharacter, this), KTech::Keys::return_, KTech::Point(p_pos.x, p_pos.y + 25), "Char Tool", DefaultValues::charTool),
-	m_canvasBackground(p_engine, p_parentUI, std::bind(&SideSection::SetBackground, this), 0, 2, std::to_string((uint8_t)DefaultValues::canvasBackground), KTech::Point(p_pos.x, p_pos.y + 29), "Back=", true)
+	m_backgroundR(p_engine, p_parentUI, std::bind(&SideSection::SetBrushValue, this), 0, 255, std::to_string(DefaultValues::brushValue.b.r), KTech::Point( p_pos.x, p_pos.y + 7 ), "R="),
+	m_backgroundG(p_engine, p_parentUI, std::bind(&SideSection::SetBrushValue, this), 0, 255, std::to_string(DefaultValues::brushValue.b.g), KTech::Point( p_pos.x, p_pos.y + 8 ), "G="),
+	m_backgroundB(p_engine, p_parentUI, std::bind(&SideSection::SetBrushValue, this), 0, 255, std::to_string(DefaultValues::brushValue.b.b), KTech::Point( p_pos.x, p_pos.y + 9 ), "B="),
+	m_backgroundA(p_engine, p_parentUI, std::bind(&SideSection::SetBrushValue, this), 0, 255, std::to_string(DefaultValues::brushValue.b.a), KTech::Point( p_pos.x, p_pos.y + 10 ), "A="),
+	m_character(p_engine, p_parentUI, std::bind(&SideSection::SetBrushValue, this), { keyrange_all }, KTech::Point( p_pos.x, p_pos.y + 14 ), "Char=", 1, {DefaultValues::brushValue.c}, true),
+	m_brushSizeX(p_engine, p_parentUI, std::bind(&SideSection::SetBrushSize, this), 1, 9, std::to_string(DefaultValues::brushSize.x), KTech::Point( p_pos.x, p_pos.y + 18 ), "BrushX="),
+	m_brushSizeY(p_engine, p_parentUI, std::bind(&SideSection::SetBrushSize, this), 1, 9, std::to_string(DefaultValues::brushSize.y), KTech::Point( p_pos.x, p_pos.y + 19 ), "BrushY="),
+	m_resetBrushPos(p_engine, p_parentUI, std::bind(&Canvas::ResetBrushPos, &TextureCreator::ui.m_canvas), KTech::Keys::return_, KTech::Point(p_pos.x, p_pos.y + 20), "Reset Pos"),
+	m_toggleForeground(p_engine, p_parentUI, std::bind(&SideSection::ToggleForeground, this), KTech::Keys::return_, KTech::Point(p_pos.x, p_pos.y + 21), "Fore Tool", DefaultValues::foreTool),
+	m_toggleBackground(p_engine, p_parentUI, std::bind(&SideSection::ToggleBackground, this), KTech::Keys::return_, KTech::Point(p_pos.x, p_pos.y + 22), "Back Tool", DefaultValues::backTool),
+	m_toggleCharacter(p_engine, p_parentUI, std::bind(&SideSection::ToggleCharacter, this), KTech::Keys::return_, KTech::Point(p_pos.x, p_pos.y + 23), "Char Tool", DefaultValues::charTool),
+	m_canvasBackground(p_engine, p_parentUI, std::bind(&SideSection::SetBackground, this), 0, 2, std::to_string((uint8_t)DefaultValues::canvasBackground), KTech::Point(p_pos.x, p_pos.y + 27), "Back=", true),
+	m_frame1(p_engine, p_parentUI, KTech::Point(p_pos.x, p_pos.y), KTech::UPoint(7, 6)),
+	m_frame2(p_engine, p_parentUI, KTech::Point(p_pos.x, p_pos.y + 7), KTech::UPoint(7, 6)),
+	m_frame3(p_engine, p_parentUI, KTech::Point(p_pos.x, p_pos.y + 18), KTech::UPoint(11, 8))
 {
 	// Widgets
 	m_foregroundR.Select();

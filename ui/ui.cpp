@@ -1,31 +1,10 @@
 #include "ui.hpp"
 #include "../texturecreator.hpp"
 
-/*
-// Canvas
-canvas = new Canvas(
-	UPoint(((IntInputField*)topSection[3])->number, ((IntInputField*)topSection[4])->number), // Canvas size
-	KTech::Point(14, 4), // Canvas position
-	((IntInputField*)sideSection[15])->number, // Background type
-	UPoint(((IntInputField*)sideSection[9])->number, ((IntInputField*)sideSection[10])->number), // Brush size
-	KTech::CellA(
-		((StringInputField*)sideSection[8])->string[0], // Brush character
-		KTech::RGBA(((IntInputField*)sideSection[0])->number, // Foreground red
-			((IntInputField*)sideSection[1])->number, // Foreground green
-			((IntInputField*)sideSection[2])->number, // Foreground blue
-			((IntInputField*)sideSection[3])->number), // Foreground alpha
-		KTech::RGBA(((IntInputField*)sideSection[4])->number, // Background red
-			((IntInputField*)sideSection[5])->number, // Background green
-			((IntInputField*)sideSection[6])->number, // Background blue
-			((IntInputField*)sideSection[7])->number)), // Background alpha),
-	layer);
-m_canvas->Select();
-*/
-
 TextureCreatorUI::TextureCreatorUI(KTech::Engine& p_engine)
 	: KTech::UI(p_engine, TextureCreator::viewportSize),
 	m_topSection(p_engine, m_id, KTech::Point(44, 1)),
-	m_sideSection(p_engine, m_id, KTech::Point(2, 5)),
+	m_sideSection(p_engine, m_id, KTech::Point(2, 4)),
 	m_canvas(
 		p_engine,
 		m_id,
