@@ -5,7 +5,7 @@
 void TextureCreator::PrintHelp()
 {
 	std::cout <<
-R"(--=== TextureCreator Manual ===---
+R"(---=== TextureCreator Manual ===---
 
 Command line arguments
 
