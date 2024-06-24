@@ -1,5 +1,7 @@
 # _TextureCreator_, a tool for creating [KTech](https://github.com/TheRealKaup/KTech) textures.
 
+![TextureCreator Screenshot](https://github.com/TheRealKaup/TheRealKaup/blob/main/texturecreatorscreenshot.png)
+
 ## Manual
 
 ### Command line arguments
