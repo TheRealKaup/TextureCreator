@@ -1,3 +1,23 @@
+/*
+	TextureCreator, a tool for creating KTech textures.
+	Copyright (C) 2023-2024 Ethan Kaufman (AKA Kaup)
+
+	This file is part of TextureCreator.
+
+	TextureCreator is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	any later version.
+
+	TextureCreator is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with TextureCreator. If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #include "ui.hpp"
 #include "../texturecreator.hpp"
 
@@ -33,7 +53,7 @@ TextureCreatorUI::TextureCreatorUI(KTech::Engine& p_engine)
 		"/-----------------------------------------/",
 		}, KTech::RGBA( 90, 170, 80, 255 ), KTech::RGBA( 0, 0, 0, 0 ), KTech::Point( 0, 0 ));
 	m_frame.m_textures[1].Simple({ 100, 1 }, KTech::CellA('-', { 90, 170, 80 }, { 0, 0, 0 }), { 43, 0 }); // Top line
-	m_frame.m_textures[2].Simple({ 1, 100 }, KTech::CellA('|', { 90, 170, 80 }, { 0, 0, 0 }), { 0, 4 }); // Side lineti_texture
+	m_frame.m_textures[2].Simple({ 1, 100 }, KTech::CellA('|', { 90, 170, 80 }, { 0, 0, 0 }), { 0, 4 }); // Side line
 	// Input
 	p_engine.input.RegisterCallback(KTech::Keys::up, std::bind(&TextureCreatorUI::Up, this));
 	p_engine.input.RegisterCallback(KTech::Keys::left, std::bind(&TextureCreatorUI::Left, this));
