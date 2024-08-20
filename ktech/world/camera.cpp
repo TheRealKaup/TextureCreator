@@ -32,15 +32,13 @@ KTech::Camera::Camera(Engine& p_engine, Point p_pos, UPoint p_res, const std::st
 	: engine(p_engine), m_pos(p_pos), m_res(p_res)
 {
 	engine.memory.cameras.Add(this);
-	m_image.resize(m_res.y, std::vector<CellA>(m_res.x));
+	m_image.resize(m_res.y * m_res.x);
 }
 
-KTech::Camera::Camera(Engine& p_engine, ID<Map>& p_map, Point p_pos, UPoint p_res, const std::string& p_name)
-	: engine(p_engine), m_pos(p_pos), m_res(p_res)
+KTech::Camera::Camera(Engine& p_engine, ID<Map>& p_map, bool p_active, Point p_pos, UPoint p_res, const std::string& p_name)
+	: Camera(p_engine, p_pos, p_res)
 {
-	engine.memory.cameras.Add(this);
-	EnterMap(p_map);
-	m_image.resize(m_res.y, std::vector<CellA>(m_res.x));
+	EnterMap(p_map, p_active);
 }
 
 KTech::Camera::~Camera()
@@ -51,19 +49,25 @@ KTech::Camera::~Camera()
 	engine.memory.cameras.Remove(m_id);
 }
 
-void KTech::Camera::EnterMap(ID<Map>& p_map)
+bool KTech::Camera::EnterMap(ID<Map>& p_map, bool p_active)
+{
+	if (p_map == m_parentMap || !engine.memory.maps.Exists(p_map))
+		return false;
+	return engine.memory.maps[p_map]->AddCamera(m_id, p_active);
+}
+
+bool KTech::Camera::LeaveMap()
 {
 	if (engine.memory.maps.Exists(m_parentMap))
-		engine.memory.maps[m_parentMap]->RemoveCamera(m_id);
-	engine.memory.maps[p_map]->AddCamera(m_id);
+		return engine.memory.maps[m_parentMap]->RemoveCamera(m_id);
+	m_parentMap = nullID<Map>;
+	return true;
 }
 
 void KTech::Camera::Resize(UPoint p_res)
 {
 	m_res = p_res;
-	m_image.resize(p_res.y);
-	for (size_t y = 0; y < p_res.y; y++)
-		m_image[y].resize(p_res.x);
+	m_image.resize(m_res.y * m_res.x);
 }
 
 void KTech::Camera::Render()
@@ -74,21 +78,22 @@ void KTech::Camera::Render()
 
 void KTech::Camera::Render(const std::vector<ID<Layer>>& p_layers)
 {
-	// Point final - the relative position between the camera and the texture (image index).
-	static KTech::Point start;
-	static KTech::Point end;
-	static RGBA tempFRGBA;
-	static RGBA tempBRGBA;
-	static uint8_t tempAlpha;
+	KTech::Point start;
+	KTech::Point end;
+	RGBA tempFRGBA;
+	RGBA tempBRGBA;
+	uint8_t tempAlpha;
 
-	// Reset the image to background.
-	for (size_t y = 0; y < m_res.y; y++)
-		for (size_t x = 0; x < m_res.x; x++)
-			m_image[y][x] = m_background;
+	// Reset the image to background
+	for (size_t i = 0; i < m_image.size(); i++)
+		m_image[i] = m_background;
 
 	for (size_t l = 0; l < p_layers.size(); l++)
 	{
 		KTech::Layer* layer = engine.memory.layers[p_layers[l]];
+		
+		if (!layer->m_visible)
+			continue;
 
 		for (size_t o = 0; o < layer->m_objects.size(); o++)
 		{
@@ -123,38 +128,59 @@ void KTech::Camera::Render(const std::vector<ID<Layer>>& p_layers)
 						start.y = 0;
 					if (start.x < 0)
 						start.x = 0;
-					// Pre-calculate added color (can only store 8-bit depth)
-					tempFRGBA = RGBA(
-					//  8 ->                16 ->               24 ->          8.
-						texture.m_value.f.r * texture.m_value.f.a * layer->m_alpha / 65025,
-						texture.m_value.f.g * texture.m_value.f.a * layer->m_alpha / 65025,
-						texture.m_value.f.b * texture.m_value.f.a * layer->m_alpha / 65025,
-					//  8 ->                16 ->          8.
-						texture.m_value.f.a * layer->m_alpha / 255
-					);
-					tempBRGBA = RGBA(
-						texture.m_value.b.r * texture.m_value.b.a * layer->m_alpha / 65025,
-						texture.m_value.b.g * texture.m_value.b.a * layer->m_alpha / 65025,
-						texture.m_value.b.b * texture.m_value.b.a * layer->m_alpha / 65025,
-						texture.m_value.b.a * layer->m_alpha / 255
-					);
-					// Render
-					for (size_t y = start.y; y < end.y; y++)
+					// Render character
+					if (texture.m_value.c != ' ')
 					{
-    					for (size_t x = start.x; x < end.x; x++)
+						if (' ' <= texture.m_value.c && texture.m_value.c <= '~')
+							for (size_t y = start.y; y < end.y; y++)
+								for (size_t x = start.x; x < end.x; x++)
+									m_image[m_res.x * y + x].c = texture.m_value.c;
+						else
+							for (size_t y = start.y; y < end.y; y++)
+								for (size_t x = start.x; x < end.x; x++)
+									m_image[m_res.x * y + x].c = ' ';
+					}
+					// Render foreground
+					tempAlpha = texture.m_value.f.a * layer->m_alpha / 255;
+					if (tempAlpha > 0)
+					{
+						// Pre-calculate added color (can only store 8-bit depth)
+						tempFRGBA = RGBA(
+							texture.m_value.f.r * texture.m_value.f.a * layer->m_alpha / 65025,
+							texture.m_value.f.g * texture.m_value.f.a * layer->m_alpha / 65025,
+							texture.m_value.f.b * texture.m_value.f.a * layer->m_alpha / 65025,
+							tempAlpha
+						);
+
+						for (size_t y = start.y; y < end.y; y++)
 						{
-							if (texture.m_value.c != ' ')
-								m_image[y][x].c = texture.m_value.c;
-							//                8.            8 ->              16 ->                 8.
-							m_image[y][x].f.r = tempFRGBA.r + m_image[y][x].f.r * (255 - tempFRGBA.a) / 255;
-							m_image[y][x].f.g = tempFRGBA.g + m_image[y][x].f.g * (255 - tempFRGBA.a) / 255;
-							m_image[y][x].f.b = tempFRGBA.b + m_image[y][x].f.b * (255 - tempFRGBA.a) / 255;
-							m_image[y][x].f.a += tempFRGBA.a * (255 - m_image[y][x].f.a) / 255;
-							//                8.            8 ->              16 ->                 8.
-							m_image[y][x].b.r = tempBRGBA.r + m_image[y][x].b.r * (255 - tempBRGBA.a) / 255;
-							m_image[y][x].b.g = tempBRGBA.g + m_image[y][x].b.g * (255 - tempBRGBA.a) / 255;
-							m_image[y][x].b.b = tempBRGBA.b + m_image[y][x].b.b * (255 - tempBRGBA.a) / 255;
-							m_image[y][x].b.a += tempBRGBA.a * (255 - m_image[y][x].b.a) / 255;
+							for (size_t x = start.x; x < end.x; x++)
+							{
+								m_image[m_res.x * y + x].f.r = tempFRGBA.r + m_image[m_res.x * y + x].f.r * (255 - tempFRGBA.a) / 255;
+								m_image[m_res.x * y + x].f.g = tempFRGBA.g + m_image[m_res.x * y + x].f.g * (255 - tempFRGBA.a) / 255;
+								m_image[m_res.x * y + x].f.b = tempFRGBA.b + m_image[m_res.x * y + x].f.b * (255 - tempFRGBA.a) / 255;
+							}
+						}
+					}
+					// Render background
+					tempAlpha = texture.m_value.b.a * layer->m_alpha / 255;
+					if (tempAlpha > 0)
+					{
+						tempBRGBA = RGBA(
+							texture.m_value.b.r * texture.m_value.b.a * layer->m_alpha / 65025,
+							texture.m_value.b.g * texture.m_value.b.a * layer->m_alpha / 65025,
+							texture.m_value.b.b * texture.m_value.b.a * layer->m_alpha / 65025,
+							tempAlpha
+						);
+
+						for (size_t y = start.y; y < end.y; y++)
+						{
+							for (size_t x = start.x; x < end.x; x++)
+							{
+								m_image[m_res.x * y + x].b.r = tempBRGBA.r + m_image[m_res.x * y + x].b.r * (255 - tempBRGBA.a) / 255;
+								m_image[m_res.x * y + x].b.g = tempBRGBA.g + m_image[m_res.x * y + x].b.g * (255 - tempBRGBA.a) / 255;
+								m_image[m_res.x * y + x].b.b = tempBRGBA.b + m_image[m_res.x * y + x].b.b * (255 - tempBRGBA.a) / 255;
+							}
 						}
 					}
 				}
@@ -176,7 +202,7 @@ void KTech::Camera::Render(const std::vector<ID<Layer>>& p_layers)
 					}
 
 					// Stop iterating through the texture until y reached the end of the texture, or final.y reached the end of the image.
-					for (; y < texture.m_t.size() && start.y < m_res.y; y++, start.y++)
+					for (; y < texture.m_size.y && start.y < m_res.y; y++, start.y++)
 					{
 						// Same goes for X
 						if (obj->m_pos.x + texture.m_rPos.x < m_pos.x)
@@ -190,26 +216,26 @@ void KTech::Camera::Render(const std::vector<ID<Layer>>& p_layers)
 							start.x = obj->m_pos.x + texture.m_rPos.x - m_pos.x;
 						}
 
-						for (; x < texture.m_t[y].size() && start.x < m_res.x; x++, start.x++)
+						for (; x < texture.m_size.x && start.x < m_res.x; x++, start.x++)
 						{
-							if (texture.m_t[y][x].c != ' ')
-								m_image[start.y][start.x].c = texture.m_t[y][x].c; // Character
+							if (texture(x, y).c != ' ')
+								m_image[m_res.x * start.y + start.x].c = (' ' <= texture(x, y).c && texture(x, y).c <= '~') ? texture(x, y).c : ' '; // Character
 							// Precalculate foreground * layer alpha (8 bit depth)
-							//          8 ->                  16 ->          8.
-							tempAlpha = texture.m_t[y][x].f.a * layer->m_alpha / 255;
-							//                            (8 ->                  16.         8 ->                          16.) ->              8.
-							m_image[start.y][start.x].f.r = (texture.m_t[y][x].f.r * tempAlpha + m_image[start.y][start.x].f.r * (255 - tempAlpha)) / 255;
-							m_image[start.y][start.x].f.g = (texture.m_t[y][x].f.g * tempAlpha + m_image[start.y][start.x].f.g * (255 - tempAlpha)) / 255;
-							m_image[start.y][start.x].f.b = (texture.m_t[y][x].f.b * tempAlpha + m_image[start.y][start.x].f.b * (255 - tempAlpha)) / 255;
-							m_image[start.y][start.x].f.a += tempAlpha * (255 - m_image[start.y][start.x].f.a) / 255;
+							tempAlpha = texture(x, y).f.a * layer->m_alpha / 255;
+							if (tempAlpha > 0)
+							{
+								m_image[m_res.x * start.y + start.x].f.r = (texture(x, y).f.r * tempAlpha + m_image[m_res.x * start.y + start.x].f.r * (255 - tempAlpha)) / 255;
+								m_image[m_res.x * start.y + start.x].f.g = (texture(x, y).f.g * tempAlpha + m_image[m_res.x * start.y + start.x].f.g * (255 - tempAlpha)) / 255;
+								m_image[m_res.x * start.y + start.x].f.b = (texture(x, y).f.b * tempAlpha + m_image[m_res.x * start.y + start.x].f.b * (255 - tempAlpha)) / 255;
+							}
 							// Precalculate background * layer alpha (8 bit depth)
-							//          8 ->                    16 ->                 8.
-							tempAlpha = texture.m_t[y][x].b.a * layer->m_alpha / 255;
-							//                            (8 ->                  16.         8 ->                          16.) ->              8.
-							m_image[start.y][start.x].b.r = (texture.m_t[y][x].b.r * tempAlpha + m_image[start.y][start.x].b.r * (255 - tempAlpha)) / 255;
-							m_image[start.y][start.x].b.g = (texture.m_t[y][x].b.g * tempAlpha + m_image[start.y][start.x].b.g * (255 - tempAlpha)) / 255;
-							m_image[start.y][start.x].b.b = (texture.m_t[y][x].b.b * tempAlpha + m_image[start.y][start.x].b.b * (255 - tempAlpha)) / 255;
-							m_image[start.y][start.x].b.a += tempAlpha * (255 - m_image[start.y][start.x].b.a) / 255;
+							tempAlpha = texture(x, y).b.a * layer->m_alpha / 255;
+							if (tempAlpha > 0)
+							{
+								m_image[m_res.x * start.y + start.x].b.r = (texture(x, y).b.r * tempAlpha + m_image[m_res.x * start.y + start.x].b.r * (255 - tempAlpha)) / 255;
+								m_image[m_res.x * start.y + start.x].b.g = (texture(x, y).b.g * tempAlpha + m_image[m_res.x * start.y + start.x].b.g * (255 - tempAlpha)) / 255;
+								m_image[m_res.x * start.y + start.x].b.b = (texture(x, y).b.b * tempAlpha + m_image[m_res.x * start.y + start.x].b.b * (255 - tempAlpha)) / 255;
+							}
 						}
 					}
 				}
@@ -222,10 +248,9 @@ void KTech::Camera::Render(const std::vector<ID<Layer>>& p_layers)
 			{
 				for (size_t x = 0; x < m_res.x; x++)
 				{
-					m_image[y][x].f.r = tempFRGBA.r + (255 - layer->m_frgba.a) * m_image[y][x].f.r / 255;
-					m_image[y][x].f.g = tempFRGBA.g + (255 - layer->m_frgba.a) * m_image[y][x].f.g / 255;
-					m_image[y][x].f.b = tempFRGBA.b + (255 - layer->m_frgba.a) * m_image[y][x].f.b / 255;
-					m_image[y][x].f.a += tempFRGBA.a * (255 - m_image[y][x].f.a) / 255;
+					m_image[m_res.x * y + x].f.r = tempFRGBA.r + (255 - layer->m_frgba.a) * m_image[m_res.x * y + x].f.r / 255;
+					m_image[m_res.x * y + x].f.g = tempFRGBA.g + (255 - layer->m_frgba.a) * m_image[m_res.x * y + x].f.g / 255;
+					m_image[m_res.x * y + x].f.b = tempFRGBA.b + (255 - layer->m_frgba.a) * m_image[m_res.x * y + x].f.b / 255;
 				}
 			}
 		}
@@ -236,10 +261,9 @@ void KTech::Camera::Render(const std::vector<ID<Layer>>& p_layers)
 			{
 				for (size_t x = 0; x < m_res.x; x++)
 				{
-					m_image[y][x].b.r = tempBRGBA.r + (255 - layer->m_brgba.a) * m_image[y][x].b.r / 255;
-					m_image[y][x].b.g = tempBRGBA.g + (255 - layer->m_brgba.a) * m_image[y][x].b.g / 255;
-					m_image[y][x].b.b = tempBRGBA.b + (255 - layer->m_brgba.a) * m_image[y][x].b.b / 255;
-					m_image[y][x].b.a += tempBRGBA.a * (255 - m_image[y][x].b.a) / 255;
+					m_image[m_res.x * y + x].b.r = tempBRGBA.r + (255 - layer->m_brgba.a) * m_image[m_res.x * y + x].b.r / 255;
+					m_image[m_res.x * y + x].b.g = tempBRGBA.g + (255 - layer->m_brgba.a) * m_image[m_res.x * y + x].b.g / 255;
+					m_image[m_res.x * y + x].b.b = tempBRGBA.b + (255 - layer->m_brgba.a) * m_image[m_res.x * y + x].b.b / 255;
 				}
 			}
 		}

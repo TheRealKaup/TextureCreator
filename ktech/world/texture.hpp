@@ -39,24 +39,32 @@ struct KTech::Texture
 	bool m_simple;
 	UPoint m_size;
 	CellA m_value;
-	std::vector<std::vector<CellA>> m_t;
+	std::vector<CellA> m_t;
 	
-	void Simple(UPoint size, CellA value, Point relateivePosition = Point(0, 0));
-	void Rectangle(UPoint size, CellA value, Point relateivePosition = Point(0, 0));// Load from a file.
-	UPoint File(const std::string& fileName, Point relateivePosition = Point(0, 0));
-	void Write(const std::vector<std::string>& stringVector, RGBA foreground, RGBA background, Point relateivePosition = Point(0, 0));
+	Texture& Simple(UPoint size, CellA value);
+	Texture& Simple(UPoint size, CellA value, Point relativePosition);
+	Texture& Rectangle(UPoint size, CellA value);
+	Texture& Rectangle(UPoint size, CellA value, Point relativePosition);
+	Texture& File(const std::string& fileName);
+	Texture& File(const std::string& fileName, Point relativePosition);
+	Texture& Write(const std::vector<std::string>& stringVector, RGBA foreground, RGBA background);
+	Texture& Write(const std::vector<std::string>& stringVector, RGBA foreground, RGBA background, Point relativePosition);
 
-	UPoint GetSize() const;
+	CellA& operator()(size_t x, size_t y);
+	const CellA& operator()(size_t x, size_t y) const;
 
 	// `newValue` - only fills the new cells.
-	void Resize(UPoint size, CellA newValue = CellA(' ', RGBA(0, 0, 0, 0), RGBA(0, 0, 0, 0)));
-	void SetCell(CellA value);
-	void SetForeground(RGBA value);
-	void SetBackground(RGBA value);
-	void SetCharacter(char value);
-	void SetForegroundAlpha(uint8_t value);
-	void SetBackgroundAlpha(uint8_t value);
-	void SetAlpha(uint8_t value);
+	Texture& Resize(UPoint size, CellA newValue = CellA(' ', RGBA(0, 0, 0, 0), RGBA(0, 0, 0, 0)));
+	Texture& SetCell(CellA value);
+	Texture& SetForeground(RGBA value);
+	Texture& SetBackground(RGBA value);
+	Texture& SetCharacter(char value);
+	Texture& SetForegroundAlpha(uint8_t value);
+	Texture& SetBackgroundAlpha(uint8_t value);
+	Texture& SetAlpha(uint8_t value);
+	Texture& ReplaceCharacter(char oldValue, char newValue);
 	
 	void ExportToFile(const std::string& fileName) const;
+	// For debugging
+	void Print();
 };

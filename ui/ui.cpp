@@ -41,42 +41,50 @@ TextureCreatorUI::TextureCreatorUI(KTech::Engine& p_engine)
 	p_engine.input.RegisterCallback(KTech::Keys::down, std::bind(&TextureCreatorUI::Down, this));
 }
 
-void TextureCreatorUI::Up()
+bool TextureCreatorUI::Up()
 {
 	if (m_curSection == Section::canvas)
 	{
 		m_canvas.Deselect();
 		m_topSection.Select();
 		m_curSection = Section::top;
+		return true;
 	}
+	return false;
 }
 
-void TextureCreatorUI::Left()
+bool TextureCreatorUI::Left()
 {
 	if (m_curSection == Section::canvas)
 	{
 		m_canvas.Deselect();
 		m_sideSection.Select();
 		m_curSection = Section::side;
+		return true;
 	}
+	return false;
 }
 
-void TextureCreatorUI::Right()
+bool TextureCreatorUI::Right()
 {
 	if (m_curSection == Section::side)
 	{
 		m_sideSection.Deselect();
 		m_canvas.Select();
 		m_curSection = Section::canvas;
+		return true;
 	}
+	return false;
 }
 
-void TextureCreatorUI::Down()
+bool TextureCreatorUI::Down()
 {
 	if (m_curSection == Section::top)
 	{
 		m_topSection.Deselect();
 		m_canvas.Select();
 		m_curSection = Section::canvas;
+		return true;
 	}
+	return false;
 }

@@ -48,7 +48,7 @@ TextureCreatorUI::SideSection::SideSection(TextureCreatorUI* const p_textureCrea
 	m_callbacksGroup->AddCallback(engine.input.RegisterCallback(KTech::Keys::up, std::bind(&SideSection::MoveUp, this)));
 }
 
-void TextureCreatorUI::SideSection::MoveDown()
+bool TextureCreatorUI::SideSection::MoveDown()
 {
 	engine.memory.widgets[m_childWidgets[m_curWidget].widget]->Deselect();
 	if (m_curWidget == WIDGETS_SIZE - 1)
@@ -56,9 +56,10 @@ void TextureCreatorUI::SideSection::MoveDown()
 	else
 		m_curWidget = (WidgetIndex)(m_curWidget + 1);
 	engine.memory.widgets[m_childWidgets[m_curWidget].widget]->Select();
+	return true;
 }
 
-void TextureCreatorUI::SideSection::MoveUp()
+bool TextureCreatorUI::SideSection::MoveUp()
 {
 	engine.memory.widgets[m_childWidgets[m_curWidget].widget]->Deselect();
 	if (m_curWidget == 0)
@@ -66,6 +67,7 @@ void TextureCreatorUI::SideSection::MoveUp()
 	else
 		m_curWidget = (WidgetIndex)(m_curWidget - 1);
 	engine.memory.widgets[m_childWidgets[m_curWidget].widget]->Select();
+	return true;
 }
 
 void TextureCreatorUI::SideSection::SetBrushSize()

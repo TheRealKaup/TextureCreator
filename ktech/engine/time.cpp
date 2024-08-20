@@ -22,7 +22,7 @@
 
 #include <thread>
 
-KTech::Time::Invocation* KTech::Time::Invoke(const std::function<void()>& p_callback, uint32_t p_time, Measurement p_measurement)
+KTech::Time::Invocation* KTech::Time::Invoke(const std::function<bool()>& p_callback, uint32_t p_time, Measurement p_measurement)
 {
 	switch (p_measurement)
 	{
@@ -77,7 +77,10 @@ void KTech::Time::CallInvocations()
 		{
 			// Call
 			if (m_invocations[i]->callback)
-				m_invocations[i]->callback();
+			{
+				if (m_invocations[i]->callback())
+					changedThisTick = true;
+			}
 			// Remove invocation
 			delete m_invocations[i];
 			m_invocations.erase(m_invocations.begin() + i);
@@ -139,7 +142,7 @@ size_t KTech::Time::GetInt(const TimePoint& p_tp, Measurement p_measurement)
 
 void KTech::Time::WaitUntilNextTick()
 {
-	// Calcualte `tpsPotential`
+	// Calculate `tpsPotential`
 	deltaTime = GetDelta(m_thisTickStartTP, TimePoint() /*now*/, Measurement::microseconds);
 	tpsPotential = 1000000.0f / deltaTime;
 	// Sleep according to `tpsLimit`

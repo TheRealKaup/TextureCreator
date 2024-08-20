@@ -40,11 +40,11 @@ void TextureCreatorUI::Canvas::SetBackground(Background p_background)
 	else if (m_background == Background::transparent)
 	{
 		m_textures[ti_background].Rectangle(m_size, KTech::CellA(' ', KTech::RGBAColors::transparent, KTech::RGBA(255, 255, 255, 255)), KTech::Point(1, 1));
-		bool offone = true;
-		for (size_t y = 0; y < m_textures[ti_background].m_t.size(); y++, offone = !offone)
-			for (size_t x = 0; x < m_textures[ti_background].m_t[y].size(); x++)
-				if (x % 2 == offone)
-					m_textures[ti_background].m_t[y][x].b = { 205, 205, 205, 255 };
+		bool offOne = true;
+		for (size_t y = 0; y < m_textures[ti_background].m_size.y; y++, offOne = !offOne)
+			for (size_t x = 0; x < m_textures[ti_background].m_size.x; x++)
+				if (x % 2 == offOne)
+					m_textures[ti_background](x, y).b = { 205, 205, 205, 255 };
 	}
 }
 
@@ -53,30 +53,22 @@ void TextureCreatorUI::Canvas::Resize(KTech::UPoint p_size)
 	// If the size isn'm_t changed then don'm_t proceed.
 	if (m_size.x == p_size.x && m_size.y == p_size.y)
 		return;
-
 	m_size = p_size;
-
 	// Background
 	SetBackground(m_background);
 	// Resize the canvas itself.
-	m_textures[ti_canvas].m_t.resize(m_size.y);
-	for (size_t y = 0; y < m_textures[ti_canvas].m_t.size(); y++)
-		m_textures[ti_canvas].m_t[y].resize(m_size.x, KTech::CellA(' ', KTech::RGBAColors::transparent));
+	m_textures[ti_canvas].Resize(m_size, KTech::CellA(' ', KTech::RGBAColors::transparent, KTech::RGBAColors::transparent));
 	// Frame
-	m_frame.Resize(KTech::UPoint(m_size.x + 2, m_size.y + 2));
+	m_frame.SetSize(KTech::UPoint(m_size.x + 2, m_size.y + 2));
 	// Reset brush pos
 	m_textures[ti_brush].m_rPos = KTech::Point( m_size.x / 2 + m_textures[ti_brush].m_size.x / 2 + 1, m_size.y / 2 + m_textures[ti_brush].m_size.y / 2 + 1);
 	// Update ui
-	textureCreatorUI->m_topSection.m_canvasSizeX.ChangeValue(std::to_string(m_size.x));
-	textureCreatorUI->m_topSection.m_canvasSizeY.ChangeValue(std::to_string(m_size.y));
+	textureCreatorUI->m_topSection.m_canvasSizeX.SetValue(std::to_string(m_size.x));
+	textureCreatorUI->m_topSection.m_canvasSizeY.SetValue(std::to_string(m_size.y));
 }
 
-void TextureCreatorUI::Canvas::Draw()
+bool TextureCreatorUI::Canvas::Draw()
 {
-	// Only draw if canvas is m_selected
-	if (!m_selected)
-		return;
-
 	// Draw
 	for (size_t y = 0; y < m_textures[ti_brush].m_size.y; y++)
 	{
@@ -85,22 +77,23 @@ void TextureCreatorUI::Canvas::Draw()
 			uint32_t fy = m_textures[ti_brush].m_rPos.y - 1 + y;
 			uint32_t fx = m_textures[ti_brush].m_rPos.x - 1 + x;
 
-			if (fy < 0 || fy >= m_textures[ti_canvas].m_t.size())
+			if (fy < 0 || fy >= m_textures[ti_canvas].m_size.y)
 				break;
-			if (fx < 0 || fx >= m_textures[ti_canvas].m_t[fy].size())
+			if (fx < 0 || fx >= m_textures[ti_canvas].m_size.x)
 				continue;
 
 			if (m_foregroundTool)
-				m_textures[ti_canvas].m_t[fy][fx].f = m_textures[ti_brush].m_value.f;
+				m_textures[ti_canvas](fx, fy).f = m_textures[ti_brush].m_value.f;
 			if (m_backgroundTool)
-				m_textures[ti_canvas].m_t[fy][fx].b = m_textures[ti_brush].m_value.b;
+				m_textures[ti_canvas](fx, fy).b = m_textures[ti_brush].m_value.b;
 			if (m_characterTool)
-				m_textures[ti_canvas].m_t[fy][fx].c = m_textures[ti_brush].m_value.c;
+				m_textures[ti_canvas](fx, fy).c = m_textures[ti_brush].m_value.c;
 		}
 	}
+	return true;
 }
 
-void TextureCreatorUI::TextureCreatorUI::Canvas::EraseFully()
+bool TextureCreatorUI::TextureCreatorUI::Canvas::EraseFully()
 {
 	for (size_t y = 0; y < m_textures[ti_brush].m_size.y; y++)
 	{
@@ -109,19 +102,20 @@ void TextureCreatorUI::TextureCreatorUI::Canvas::EraseFully()
 			uint32_t fy = m_textures[ti_brush].m_rPos.y - 1 + y;
 			uint32_t fx = m_textures[ti_brush].m_rPos.x - 1 + x;
 
-			if (fy < 0 || fy >= m_textures[ti_canvas].m_t.size())
+			if (fy < 0 || fy >= m_textures[ti_canvas].m_size.y)
 				break;
-			if (fx < 0 || fx >= m_textures[ti_canvas].m_t[fy].size())
+			if (fx < 0 || fx >= m_textures[ti_canvas].m_size.y)
 				continue;
 
-			m_textures[ti_canvas].m_t[fy][fx].f = KTech::RGBAColors::transparent;
-			m_textures[ti_canvas].m_t[fy][fx].b = KTech::RGBAColors::transparent;
-			m_textures[ti_canvas].m_t[fy][fx].c = ' ';
+			m_textures[ti_canvas](fx, fy).f = KTech::RGBAColors::transparent;
+			m_textures[ti_canvas](fx, fy).b = KTech::RGBAColors::transparent;
+			m_textures[ti_canvas](fx, fy).c = ' ';
 		}
 	}
+	return true;
 }
 
-void TextureCreatorUI::Canvas::EraseAccordingToToggledTools()
+bool TextureCreatorUI::Canvas::EraseAccordingToToggledTools()
 {
 	for (size_t y = 0; y < m_textures[ti_brush].m_size.y; y++)
 	{
@@ -130,19 +124,20 @@ void TextureCreatorUI::Canvas::EraseAccordingToToggledTools()
 			uint32_t fy = m_textures[ti_brush].m_rPos.y - 1 + y;
 			uint32_t fx = m_textures[ti_brush].m_rPos.x - 1 + x;
 
-			if (fy < 0 || fy >= m_textures[ti_canvas].m_t.size())
+			if (fy < 0 || fy >= m_textures[ti_canvas].m_size.y)
 				break;
-			if (fx < 0 || fx >= m_textures[ti_canvas].m_t[fy].size())
+			if (fx < 0 || fx >= m_textures[ti_canvas].m_size.x)
 				continue;
 
 			if (m_foregroundTool)
-				m_textures[ti_canvas].m_t[fy][fx].f = KTech::RGBAColors::transparent;
+				m_textures[ti_canvas](fx, fy).f = KTech::RGBAColors::transparent;
 			if (m_backgroundTool)
-				m_textures[ti_canvas].m_t[fy][fx].b = KTech::RGBAColors::transparent;
+				m_textures[ti_canvas](fx, fy).b = KTech::RGBAColors::transparent;
 			if (m_characterTool)
-				m_textures[ti_canvas].m_t[fy][fx].c = ' ';
+				m_textures[ti_canvas](fx, fy).c = ' ';
 		}
 	}
+	return true;
 }
 
 void TextureCreatorUI::Canvas::SetBrushSize(KTech::UPoint p_size)
@@ -155,12 +150,8 @@ void TextureCreatorUI::Canvas::SetBrushValue(KTech::CellA p_value)
 	m_textures[ti_brush].m_value = p_value;
 }
 
-void TextureCreatorUI::Canvas::MoveBrush()
+bool TextureCreatorUI::Canvas::MoveBrush()
 {
-	// Only move if canvas is m_selected
-	if (!m_selected)
-		return;
-
 	if (engine.input.Is('w')) // up
 	{
 		if (m_textures[ti_brush].m_rPos.y + m_textures[ti_brush].m_size.y > 2)
@@ -182,11 +173,13 @@ void TextureCreatorUI::Canvas::MoveBrush()
 		if (m_textures[ti_brush].m_rPos.x < (int32_t)m_size.x)
 			m_textures[ti_brush].m_rPos.x++;
 	}
+	return true;
 }
 
 void TextureCreatorUI::Canvas::Import(const std::string& fileName)
 {
-	Canvas::Resize(m_textures[ti_canvas].File(fileName, KTech::Point(1, 1)));
+	m_textures[ti_canvas].File(fileName, KTech::Point(1, 1));
+	Canvas::Resize(m_textures[ti_canvas].m_size);
 }
 
 void TextureCreatorUI::Canvas::Export(const std::string& fileName)

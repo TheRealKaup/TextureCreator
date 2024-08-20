@@ -23,7 +23,7 @@ TextureCreatorUI::TopSection::TopSection(TextureCreatorUI* const p_textureCreato
 	m_callbacksGroup->AddCallback(engine.input.RegisterCallback(KTech::Keys::left, std::bind(&TopSection::MoveLeft, this)));
 }
 
-void TextureCreatorUI::TopSection::MoveRight()
+bool TextureCreatorUI::TopSection::MoveRight()
 {
 	engine.memory.widgets[m_childWidgets[m_curWidget].widget]->Deselect();
 	if (m_curWidget == WIDGETS_SIZE - 1)
@@ -31,9 +31,10 @@ void TextureCreatorUI::TopSection::MoveRight()
 	else
 		m_curWidget = (WidgetIndex)(m_curWidget + 1);
 	engine.memory.widgets[m_childWidgets[m_curWidget].widget]->Select();
+	return true;
 }
 
-void TextureCreatorUI::TopSection::MoveLeft()
+bool TextureCreatorUI::TopSection::MoveLeft()
 {
 	engine.memory.widgets[m_childWidgets[m_curWidget].widget]->Deselect();
 	if (m_curWidget == 0)
@@ -41,6 +42,7 @@ void TextureCreatorUI::TopSection::MoveLeft()
 	else
 		m_curWidget = (WidgetIndex)(m_curWidget - 1);
 	engine.memory.widgets[m_childWidgets[m_curWidget].widget]->Select();
+	return true;
 }
 
 void TextureCreatorUI::TopSection::ResizeCanvas()

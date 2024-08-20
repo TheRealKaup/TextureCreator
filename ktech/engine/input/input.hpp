@@ -23,14 +23,11 @@
 #define KTECH_DEFINITION
 #include "../../ktech.hpp"
 #undef KTECH_DEFINITION
-#include "../../basic/rgb.hpp"
 
 #include <functional>
 #include <string>
 #include <termio.h>
 #include <thread>
-
-static void TempLog(const std::string&, KTech::RGB color) {}
 
 class KTech::Input
 {
@@ -40,7 +37,7 @@ public:
 	struct RangedCallback;
 	struct RangedHandler;
 	class CallbacksGroup;
-
+	
 	std::string input;
 	std::string quitKey = "\x03";
 
@@ -49,8 +46,8 @@ public:
 	// Resets terminal
 	~Input();
 
-	BasicCallback* RegisterCallback(const std::string& stringKey, const std::function<void()>& callback, bool onTick = false);
-	RangedCallback* RegisterRangedCallback(char key1, char key2, const std::function<void()>& callback);
+	BasicCallback* RegisterCallback(const std::string& stringKey, const std::function<bool()>& callback, bool onTick = false);
+	RangedCallback* RegisterRangedCallback(char key1, char key2, const std::function<bool()>& callback);
 	CallbacksGroup* CreateCallbacksGroup(bool enabled = true);
 
 	bool Is(const std::string& stringKey);
@@ -68,11 +65,14 @@ private:
 
 	termios m_oldTerminalAttributes;
 	std::thread m_inputLoop;
-	std::vector<BasicHandler*> m_basicHandlers; // Never deleted, no need to store in pointers; handleded by indices
-	std::vector<RangedHandler*> m_rangedHandlers; // Never deleted, no need to store in pointers; handleded by indices
-	std::vector<CallbacksGroup*> m_groups; // Usually experiences deletions; handleded by pointers
+	std::vector<BasicHandler*> m_basicHandlers;
+	std::vector<RangedHandler*> m_rangedHandlers;
+	std::vector<CallbacksGroup*> m_groups;
+	bool changedThisTick = false;
 
 	static char* Get();
 
 	void Loop();
+
+	friend class Output;
 };

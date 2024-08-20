@@ -21,47 +21,44 @@
 #include "output.hpp"
 
 #include "../utility/keys.hpp"
+#include "../utility/rgbcolors.hpp"
 #include "../basic/cell.hpp"
-#include "../basic/cella.hpp"
 #include "../basic/upoint.hpp"
 #include "../engine/engine.hpp"
 
 #include <iostream>
 
-KTech::Output::Output(Engine* p_engine, KTech::UPoint p_imageSize)
-	: engine(p_engine)
+KTech::Output::Output(Engine* p_engine, KTech::UPoint p_res)
+	: engine(p_engine),
+	resolution(p_res),
+	m_image(p_res.x * p_res.y, Cell(' ', RGBColors::black, RGBColors::black)),
+	m_stringImage(p_res.y * 3 + p_res.x * p_res.y * 39, ' ')
 {
-	// (OUTPUT) Hide cursor and enable alternative buffer (the "save screen" and "restore screen" options aren't preferable, alternative buffer makes more sense).
-	std::cout << "\033[?25l\033[?1049h";
-
-	// (OUTPUT) Size the image
-	m_image.resize(p_imageSize.y);
-	for (size_t y = 0; y < m_image.size(); y++)
-		m_image[y].resize(p_imageSize.x);
-	size_t maxStringSize = m_image.size() * 4; // reserved for '\n'
-	for (size_t y = 0; y < m_image.size(); y++)
-		maxStringSize += m_image[y].size() * 39; // reserved for characters
-	if (maxStringSize == 0)
-		return;
-	if (m_stringImage.size() < maxStringSize)
-		m_stringImage.resize(maxStringSize);
+#ifdef DEBUG
+	// Switch to alternative buffer (don't hide cursor for breaking with a debugger like GDB)
+	std::cout << "\033[?1049h";
+#else
+	// Switch to alternative buffer and hide cursor
+	std::cout << "\033[?1049h\033[?25l";
+#endif
 }
 
 KTech::Output::~Output()
 {
 	// Show cursor, and disable alternative buffer (return to previous terminal)
 	std::cout << "\033[?25h\033[?1049l" << std::flush;
+	for (std::string& out : outputAfterQuit)
+		std::cout << out;
 }
 
 void KTech::Output::Log(const std::string& p_text, RGB p_color)
 {
 	static uint32_t logIndex = 0;
 	std::cout << "\033[38;2;" << std::to_string(p_color.r) << ';' << std::to_string(p_color.g) << ';' << std::to_string(p_color.b) << 'm' << logIndex << "] " << p_text << "\033[m" << std::endl << std::flush;
-	// std::cout << logIndex << "] " << text << std::endl << std::flush;
 	logIndex++;
 }
 
-void KTech::Output::PrintStartupNotice(const std::string& p_title, const std::string& p_years, const std::string p_author, const std::string p_projectName)
+void KTech::Output::PrintStartupNotice(const std::string& p_title, const std::string& p_years, const std::string& p_author, const std::string& p_projectName)
 {
 	// Clear the terminal
 	std::cout << "\033[H\033[3J\033[2J";
@@ -88,45 +85,38 @@ void KTech::Output::PrintStartupNotice(const std::string& p_title, const std::st
 	std::cout << "Read the legal notices, and then press the 'return' key (enter) to proceed..." << std::flush;
 	while (engine->input.input != Keys::return_ && engine->running);
 	if (!engine->running)
-		exit(0); // exit the thread completely
+		exit(0); // exit the thread completely to stop game loading prior to entering game loop
 }
 
-void KTech::Output::Draw(const std::vector<std::vector<CellA>>& p_render, Point p_pos, uint16_t p_left, uint16_t p_top, uint16_t p_right, uint16_t p_bottom, uint8_t p_alpha)
+void KTech::Output::Clear()
+{
+	for (size_t i = 0; i < resolution.x * resolution.y; i++)
+		m_image[i] = Cell(' ', RGB(0, 0, 0), RGB(0, 0, 0));
+}
+
+void KTech::Output::Draw(const std::vector<Cell>& p_image, UPoint p_res, Point p_pos, UPoint p_start, UPoint p_end, uint8_t p_alpha)
 {
 	// Default the rectangle
-	if (p_bottom == 0)
-		p_bottom = p_render.size();
-	if (p_right == 0)
-		p_right = p_render[0].size();
-	// Return if rectangle is invalid
-	if (p_left >= p_right || p_top >= p_bottom)
-		return;
-
-	// To avoid repeating the same calculation
-	uint8_t tempAlpha;
+	if (p_end.x == 0)
+		p_end.x = p_res.x;
+	if (p_end.y == 0)
+		p_end.y = p_res.y;
 
 	// Draw
-	for (size_t yF = (p_pos.y < 0 ? 0 : p_pos.y), yR = p_top; yF < m_image.size() && yR < p_bottom; yF++, yR++)
+	for (size_t yF = (p_pos.y < 0 ? 0 : p_pos.y), yR = p_start.y; yF < resolution.y && yR < p_end.y; yF++, yR++)
 	{
-		for (size_t xF = (p_pos.x < 0 ? 0 : p_pos.x), xR = p_left; xF < m_image[yF].size() && xR < p_right; xF++, xR++)
+		for (size_t xF = (p_pos.x < 0 ? 0 : p_pos.x), xR = p_start.x; xF < resolution.x && xR < p_end.x; xF++, xR++)
 		{
-			if (p_render[yR][xR].c != ' ')
-			{
-				m_image[yF][xF].c = p_render[yR][xR].c;
-				tempAlpha = p_render[yR][xR].f.a * p_alpha / 255;
-				//                   8 ->                 16 ->     + 8 ->                16 ->                8.
-				m_image[yF][xF].f.r = (p_render[yR][xR].f.r * tempAlpha + m_image[yF][xF].f.r * (255 - tempAlpha)) / 255;
-				m_image[yF][xF].f.g = (p_render[yR][xR].f.g * tempAlpha + m_image[yF][xF].f.g * (255 - tempAlpha)) / 255;
-				m_image[yF][xF].f.b = (p_render[yR][xR].f.b * tempAlpha + m_image[yF][xF].f.b * (255 - tempAlpha)) / 255;
-			}
-			tempAlpha = p_render[yR][xR].b.a * p_alpha / 255;
+			m_image[resolution.x * yF + xF].c = p_image[p_res.x * yR + xR].c;
 			//                   8 ->                 16 ->     + 8 ->                16 ->                8.
-			m_image[yF][xF].b.r = (p_render[yR][xR].b.r * tempAlpha + m_image[yF][xF].b.r * (255 - tempAlpha)) / 255;
-			m_image[yF][xF].b.g = (p_render[yR][xR].b.g * tempAlpha + m_image[yF][xF].b.g * (255 - tempAlpha)) / 255;
-			m_image[yF][xF].b.b = (p_render[yR][xR].b.b * tempAlpha + m_image[yF][xF].b.b * (255 - tempAlpha)) / 255;
+			m_image[resolution.x * yF + xF].f.r = (p_image[p_res.x * yR + xR].f.r * p_alpha + m_image[resolution.x * yF + xF].f.r * (255 - p_alpha)) / 255;
+			m_image[resolution.x * yF + xF].f.g = (p_image[p_res.x * yR + xR].f.g * p_alpha + m_image[resolution.x * yF + xF].f.g * (255 - p_alpha)) / 255;
+			m_image[resolution.x * yF + xF].f.b = (p_image[p_res.x * yR + xR].f.b * p_alpha + m_image[resolution.x * yF + xF].f.b * (255 - p_alpha)) / 255;
+			m_image[resolution.x * yF + xF].b.r = (p_image[p_res.x * yR + xR].b.r * p_alpha + m_image[resolution.x * yF + xF].b.r * (255 - p_alpha)) / 255;
+			m_image[resolution.x * yF + xF].b.g = (p_image[p_res.x * yR + xR].b.g * p_alpha + m_image[resolution.x * yF + xF].b.g * (255 - p_alpha)) / 255;
+			m_image[resolution.x * yF + xF].b.b = (p_image[p_res.x * yR + xR].b.b * p_alpha + m_image[resolution.x * yF + xF].b.b * (255 - p_alpha)) / 255;
 		}
 	}
-
 }
 
 void KTech::Output::Print()
@@ -134,35 +124,22 @@ void KTech::Output::Print()
 	// Get terminal size
 	ioctl(fileno(stdout), TIOCGWINSZ, &m_terminalSize);
 
-	// Obtain the maximum length for the stringImage
-	if (m_image.size() == 0)
-		return;
-
-	// Resize the stringImage if needed
-	size_t maxStringSize = m_image.size() * 3; // reserved for '\n'
-	for (size_t y = 0; y < m_image.size(); y++)
-		maxStringSize += m_image[y].size() * 39; // reserved for characters
-	if (maxStringSize == 0)
-		return;
-	if (m_stringImage.size() < maxStringSize) // resize
-		m_stringImage.resize(maxStringSize);
-
 	// Write the image to stringImage
 	size_t l = 0;
 	uint8_t lfr = 0, lfg = 0, lfb = 0, lbr = 0, lbg = 0, lbb = 0;
 
 	// "&& y < size.ws_row" - fit into the terminal, in the case that it is too small
 	// "&& printRequests == 1" - stop working on a print if there is a newer print request
-	for (size_t y = 0; y < m_image.size() && y < m_terminalSize.ws_row; y++)
+	for (size_t y = 0; y < resolution.y && y < m_terminalSize.ws_row; y++)
 	{
 		if (y != 0) {
 			m_stringImage[l] = '\n';
 			l++;
 		}
 		// First char in the line (optimizations)
-		lfr = m_image[y][0].f.r;
-		lfg = m_image[y][0].f.g;
-		lfb = m_image[y][0].f.b;
+		lfr = m_image[resolution.x * y].f.r;
+		lfg = m_image[resolution.x * y].f.g;
+		lfb = m_image[resolution.x * y].f.b;
 
 		m_stringImage[l] = '\033';
 		m_stringImage[l + 1] = '[';
@@ -183,9 +160,9 @@ void KTech::Output::Print()
 		m_stringImage[l + 16] = (lfb % 100) / 10 + '0';
 		m_stringImage[l + 17] = lfb % 10 + '0';
 		m_stringImage[l + 18] = 'm';
-		lbr = m_image[y][0].b.r;
-		lbg = m_image[y][0].b.g;
-		lbb = m_image[y][0].b.b;
+		lbr = m_image[resolution.x * y].b.r;
+		lbg = m_image[resolution.x * y].b.g;
+		lbb = m_image[resolution.x * y].b.b;
 		m_stringImage[l + 19] = '\033';
 		m_stringImage[l + 20] = '[';
 		m_stringImage[l + 21] = '4';
@@ -205,19 +182,19 @@ void KTech::Output::Print()
 		m_stringImage[l + 35] = (lbb % 100) / 10 + '0';
 		m_stringImage[l + 36] = lbb % 10 + '0';
 		m_stringImage[l + 37] = 'm';
-		if (m_image[y][0].c >= ' ' && m_image[y][0].c <= '~')
-			m_stringImage[l + 38] = m_image[y][0].c;
+		if (m_image[resolution.x * y].c >= ' ' && m_image[resolution.x * y].c <= '~')
+			m_stringImage[l + 38] = m_image[resolution.x * y].c;
 		else
 			m_stringImage[l + 38] = '?';
 		l += 39;
-		for (size_t x = 1; x < m_image[y].size() && x < m_terminalSize.ws_col; x++)
+		for (size_t x = 1; x < resolution.x && x < m_terminalSize.ws_col; x++)
 		{
 			// foreground
-			if ((m_image[y][x].c != ' ') && (m_image[y][x].f.r != lfr || m_image[y][x].f.g != lfg || m_image[y][x].f.b != lfb))
+			if ((m_image[resolution.x * y + x].c != ' ') && (m_image[resolution.x * y + x].f.r != lfr || m_image[resolution.x * y + x].f.g != lfg || m_image[resolution.x * y + x].f.b != lfb))
 			{
-				lfr = m_image[y][x].f.r;
-				lfg = m_image[y][x].f.g;
-				lfb = m_image[y][x].f.b;
+				lfr = m_image[resolution.x * y + x].f.r;
+				lfg = m_image[resolution.x * y + x].f.g;
+				lfb = m_image[resolution.x * y + x].f.b;
 				m_stringImage[l] = '\033';
 				m_stringImage[l + 1] = '[';
 				m_stringImage[l + 2] = '3';
@@ -240,11 +217,11 @@ void KTech::Output::Print()
 				l += 19;
 			}
 			// background
-			if (m_image[y][x].b.r != lbr || m_image[y][x].b.g != lbg || m_image[y][x].b.b != lbb)
+			if (m_image[resolution.x * y + x].b.r != lbr || m_image[resolution.x * y + x].b.g != lbg || m_image[resolution.x * y + x].b.b != lbb)
 			{
-				lbr = m_image[y][x].b.r;
-				lbg = m_image[y][x].b.g;
-				lbb = m_image[y][x].b.b;
+				lbr = m_image[resolution.x * y + x].b.r;
+				lbg = m_image[resolution.x * y + x].b.g;
+				lbb = m_image[resolution.x * y + x].b.b;
 
 				m_stringImage[l] = '\033';
 				m_stringImage[l + 1] = '[';
@@ -267,8 +244,8 @@ void KTech::Output::Print()
 				m_stringImage[l + 18] = 'm';
 				l += 19;
 			}
-			if (m_image[y][x].c >= ' ' && m_image[y][x].c <= '~')
-				m_stringImage[l] = m_image[y][x].c;
+			if (m_image[resolution.x * y + x].c >= ' ' && m_image[resolution.x * y + x].c <= '~')
+				m_stringImage[l] = m_image[resolution.x * y + x].c;
 			else
 				m_stringImage[l] = '?';
 			l++;
@@ -279,8 +256,28 @@ void KTech::Output::Print()
 		l += 3;
 	}
 	std::cout << "\033[H\033[3J\033[2J" << m_stringImage.substr(0, l) << std::flush;
-	
-	for (size_t y = 0; y < m_image.size(); y++)
-		for (size_t x = 0; x < m_image[y].size(); x++)
-			m_image[y][x] = Cell(' ', RGB(0, 0, 0), RGB(0, 0, 0));
+}
+
+bool KTech::Output::ShouldRenderThisTick()
+{
+	if (engine->input.changedThisTick
+		|| engine->memory.changedThisTick
+		|| engine->time.changedThisTick
+		|| engine->time.ticksCounter == 0)
+	{
+		engine->input.changedThisTick = false;
+		engine->memory.changedThisTick = false;
+		engine->time.changedThisTick = false;
+		return true;
+	}
+	return false;
+}
+
+bool KTech::Output::ShouldPrintThisTick()
+{
+	winsize tempTerminalSize;
+	ioctl(fileno(stdout), TIOCGWINSZ, &tempTerminalSize);
+	if (tempTerminalSize.ws_row != m_terminalSize.ws_row || tempTerminalSize.ws_col != m_terminalSize.ws_col)
+		return true;
+	return false;
 }

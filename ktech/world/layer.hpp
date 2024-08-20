@@ -29,8 +29,9 @@
 #include <string>
 #include <vector>
 
-struct KTech::Layer
+class KTech::Layer
 {
+public:
 	Engine& engine;
 	ID<Layer> m_id;
 	std::string m_name;
@@ -44,17 +45,20 @@ struct KTech::Layer
 
 	Layer(Engine& engine, const std::string& name = "");
 	Layer(Engine& engine, ID<Map>& parentMap, const std::string& name = "");
-	~Layer();
+	virtual ~Layer();
 
 	// Use this refereance temporarily - do not move this reference, it can become stale.
 	ID<Object>& operator[](size_t index);
 	
-	inline virtual void OnTick() {};
-
-	void AddObject(ID<Object>& object);
-	
-	bool RemoveObject(const std::string& name);
+	bool AddObject(ID<Object>& object);
 	bool RemoveObject(ID<Object>& object);
+	bool RemoveAllObjects();
 
-	void EnterMap(ID<Map>& map);
+	bool EnterMap(ID<Map>& map);
+	bool LeaveMap();
+
+protected:
+	inline virtual bool OnTick() { return false; };
+
+	friend class KTech::Memory;
 };

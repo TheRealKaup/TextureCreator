@@ -44,15 +44,15 @@ namespace KTech
 	// Definitions in `world/`
 	struct Texture;
 	struct Collider;
-	struct Object;
-	struct Layer;
-	struct Camera;
-	struct Map;
-	struct Widget;
-	struct UI;
+	class Object;
+	class Layer;
+	class Camera;
+	class Map;
+	class Widget;
+	class UI;
+	class Animation;
 	// Engine and its components.
 	// Definitions in `engine/`
-	class Audio;
 	class Collision;
 	class Input;
 	class Memory;
@@ -60,11 +60,11 @@ namespace KTech
 	class Time;
 	class Engine;
 	// Defined in `utility/`
-	enum class CR : uint8_t;	
+	enum class CR : uint8_t;
 	template<class T>
 	struct ID;
 	template<class T>
-	inline ID<T> nullID = ID<T>(0, 0);
+	inline constexpr ID<T> nullID = ID<T>(0, 0);
 	template<typename T>
 	struct Container;
 	namespace RGBColors {}
@@ -83,6 +83,7 @@ namespace KTech
 #include "basic/cell.hpp"
 #include "basic/cella.hpp"
 
+#include "world/animation.hpp"
 #include "world/collider.hpp"
 #include "world/texture.hpp"
 #include "world/object.hpp"
@@ -99,7 +100,6 @@ namespace KTech
 #include "utility/rgbcolors.hpp"
 #include "utility/rgbacolors.hpp"
 
-#include "engine/audio.hpp"
 #include "engine/collision.hpp"
 #include "engine/input/input.hpp"
 #include "engine/input/callbacksgroup.hpp"

@@ -36,4 +36,9 @@ public:
 	Container<UI> uis;
 
 	void CallOnTicks();
+
+private:
+	bool changedThisTick = false;
+
+	friend class Output;
 };

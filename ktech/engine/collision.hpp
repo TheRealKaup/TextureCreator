@@ -31,8 +31,6 @@
 class KTech::Collision
 {
 public:
-	Engine* const engine;
-
 	std::vector<std::vector<CR>> colliderTypes = {
 		{ CR::B, CR::P, CR::O }, // Unpushable - 0
 		{ CR::B, CR::P, CR::O }, // Pushable - 1
@@ -45,6 +43,8 @@ public:
 	bool MoveObject(ID<Object>& object, Point direction);
 
 private:
+	Engine* const engine;
+	
 	struct CollisionData{
 		ID<Object> activeObject;
 		ID<Object> passiveObject;
@@ -53,10 +53,8 @@ private:
 	};
 
 	CR GetPotentialCollisionResult(uint8_t t1, uint8_t t2);
-
-	static bool AreSimpleCollidersOverlapping(UPoint simple1, Point position1, UPoint simple2, Point position2);
-	static bool AreSimpleAndComplexCollidersOverlapping(UPoint simple, Point simplePosition, const std::vector<std::vector<bool>>& complex, Point complexPosition);
-	static bool AreComplexCollidersOverlapping(const std::vector<std::vector<bool>>& collider1, Point position1, const std::vector<std::vector<bool>>& collider2, Point position2);
+	// Warning: `position1` and `position2` override `collider1.m_rPos` and `collider2.m_rPos` respectively
+	static bool AreCollidersOverlapping(const Collider& collider1, const Point position1, const Collider& collider2, const Point& position2);
 
 	void ExpandMovementTree(ID<Object>& thisObject,Point direction,
 		std::vector<CollisionData>& pushData,

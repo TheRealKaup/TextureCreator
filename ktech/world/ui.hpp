@@ -24,7 +24,7 @@
 #include "../ktech.hpp"
 #undef KTECH_DEFINITION
 #include "../utility/id.hpp"
-#include "../basic/cella.hpp"
+#include "../basic/cell.hpp"
 #include "../basic/rgba.hpp"
 #include "../basic/upoint.hpp"
 
@@ -32,30 +32,34 @@
 #include <vector>
 
 // Acts as a camera and a layer for `Widget`s. Image is compatible with `IO::Draw()`.
-struct KTech::UI
+class KTech::UI
 {
+public:
 	Engine& engine;
 	ID<UI> m_id;
 	std::string m_name;
 	std::vector<ID<Widget>> m_widgets;
 
 	UPoint m_res;
-	CellA m_background = CellA(' ', RGBA(0, 0, 0, 0), RGBA(0, 0, 0, 0)); // The background to render upon.
+	Cell m_background = Cell(' ', RGB(0, 0, 0), RGB(0, 0, 0)); // The background to render upon.
 	RGBA m_frgba = RGBA(0, 0, 0, 0);
 	RGBA m_brgba = RGBA(0, 0, 0, 0);
 	uint8_t m_alpha = 255;
-	std::vector<std::vector<CellA>> m_image;
+	std::vector<Cell> m_image;
 
 	UI(Engine& engine, UPoint resolution = UPoint(10, 10), const std::string& name = "");
-	~UI();
+	virtual ~UI();
 
-	inline virtual void OnTick() {};
-	
-	void AddWidget(ID<Widget> widget);
-
+	bool AddWidget(ID<Widget> widget);
 	bool RemoveWidget(ID<Widget> widget);
+	bool RemoveAllWidgets();
 
 	void Resize(UPoint resolution);
 
 	void Render();
+	
+protected:
+	inline virtual bool OnTick() { return false; };
+
+	friend class KTech::Memory;
 };

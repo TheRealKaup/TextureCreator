@@ -6,7 +6,7 @@
 #include "../ktech/widgets/stringfield.hpp"
 #include "../ktech/widgets/switch.hpp"
 
-#include "frame.hpp"
+#include "../ktech/widgets/frame.hpp"
 
 struct TextureCreatorUI : KTech::UI
 {
@@ -57,13 +57,13 @@ struct TextureCreatorUI : KTech::UI
 
 		void SetBackground(Background background);
 		void Resize(KTech::UPoint size);
-		void Draw();
-		void EraseFully();
-		void EraseAccordingToToggledTools();
+		bool Draw();
+		bool EraseFully();
+		bool EraseAccordingToToggledTools();
 
 		void SetBrushSize(KTech::UPoint size);
 		void SetBrushValue(KTech::CellA value);
-		void MoveBrush();
+		bool MoveBrush();
 
 		void Import(const std::string& fileName);
 		void Export(const std::string& fileName);
@@ -94,8 +94,8 @@ struct TextureCreatorUI : KTech::UI
 
 		TopSection(TextureCreatorUI* const textureCreatorUI, KTech::Engine& engine, KTech::ID<KTech::UI> parentUI, KTech::Point pos);
 
-		void MoveRight();
-		void MoveLeft();
+		bool MoveRight();
+		bool MoveLeft();
 
 		// Member widgets' callbacks.
 		// Note: these only redirect values to other areas of TextureCreator and don't manipulate the program in any other way, as UI should behave.
@@ -153,8 +153,8 @@ struct TextureCreatorUI : KTech::UI
 
 		SideSection(TextureCreatorUI* const textureCreatorUI, KTech::Engine& engine, KTech::ID<KTech::UI> parentUI, KTech::Point pos);
 
-		void MoveDown();
-		void MoveUp();
+		bool MoveDown();
+		bool MoveUp();
 
 		void SetBrushSize();
 		void SetBrushValue();
@@ -185,8 +185,8 @@ struct TextureCreatorUI : KTech::UI
 
 	TextureCreatorUI(KTech::Engine& engine);
 
-	void Up();
-	void Left();
-	void Right();
-	void Down();
+	bool Up();
+	bool Left();
+	bool Right();
+	bool Down();
 };

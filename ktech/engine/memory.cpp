@@ -30,16 +30,34 @@
 
 void KTech::Memory::CallOnTicks()
 {
-	for (size_t i = 0; i < uis.m_size; i++)
+	size_t i = 0;
+	for (; i < uis.m_size && !changedThisTick; i++)
+		changedThisTick = uis.m_arr[i]->OnTick();
+	for (; i < uis.m_size; i++)
 		uis.m_arr[i]->OnTick();
-	for (size_t i = 0; i < widgets.m_size; i++)
+	i = 0;
+	for (; i < widgets.m_size && !changedThisTick; i++)
+		changedThisTick = widgets.m_arr[i]->OnTick();
+	for (; i < widgets.m_size; i++)
 		widgets.m_arr[i]->OnTick();
-	for (size_t i = 0; i < maps.m_size; i++)
+	i = 0;
+	for (; i < maps.m_size && !changedThisTick; i++)
+		changedThisTick = maps.m_arr[i]->OnTick();
+	for (; i < maps.m_size; i++)
 		maps.m_arr[i]->OnTick();
-	for (size_t i = 0; i < cameras.m_size; i++)
+	i = 0;
+	for (; i < cameras.m_size && !changedThisTick; i++)
+		changedThisTick = cameras.m_arr[i]->OnTick();
+	for (; i < cameras.m_size; i++)
 		cameras.m_arr[i]->OnTick();
-	for (size_t i = 0; i < layers.m_size; i++)
+	i = 0;
+	for (; i < layers.m_size && !changedThisTick; i++)
+		changedThisTick = layers.m_arr[i]->OnTick();
+	for (; i < layers.m_size; i++)
 		layers.m_arr[i]->OnTick();
-	for (size_t i = 0; i < objects.m_size; i++)
+	i = 0;
+	for (; i < objects.m_size && !changedThisTick; i++)
+		changedThisTick = objects.m_arr[i]->OnTick();
+	for (; i < objects.m_size; i++)
 		objects.m_arr[i]->OnTick();
 }

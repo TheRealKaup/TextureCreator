@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
 		textureCreator.engine.memory.CallOnTicks();
 
 		textureCreator.ui.Render();
-		textureCreator.engine.output.Draw(textureCreator.ui.m_image);
+		textureCreator.engine.output.Draw(textureCreator.ui.m_image, textureCreator.ui.m_res);
 		textureCreator.engine.output.Print();
 
 		textureCreator.engine.time.WaitUntilNextTick();

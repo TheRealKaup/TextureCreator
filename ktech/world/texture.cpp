@@ -21,139 +21,107 @@
 #include "texture.hpp"
 
 #include "../utility/rgbacolors.hpp"
-#include "../engine/output.hpp"
 
 #include <fstream>
 #include <iostream>
 
-void KTech::Texture::Simple(UPoint p_size, CellA p_value, Point p_pos) {
+KTech::Texture& KTech::Texture::Simple(UPoint p_size, CellA p_value)
+{
 	m_simple = true;
-	m_rPos = p_pos;
 	m_size = p_size;
 	m_value = p_value;
+	return *this;
 }
 
-void KTech::Texture::Rectangle(UPoint p_size, CellA p_value, Point p_pos)
+KTech::Texture& KTech::Texture::Simple(UPoint p_size, CellA p_value, Point p_pos)
 {
-	m_simple = false;
 	m_rPos = p_pos;
-	m_t.clear();
-	m_t.resize(p_size.y, std::vector<CellA>(p_size.x, p_value));
+	return Simple(p_size, p_value);
 }
 
-KTech::UPoint KTech::Texture::File(const std::string& p_fileName, Point p_pos)
+KTech::Texture& KTech::Texture::Rectangle(UPoint p_size, CellA p_value)
 {
 	m_simple = false;
-	m_rPos = p_pos;
-	m_size = UPoint(0, 0);
+	m_size = p_size;
+	m_t.resize(p_size.x * p_size.y);
+	for (CellA& i : m_t)
+		i = p_value;
+	return *this;
+}
 
-	Output::Log("<KTech::Texture::File()> Opening file " + p_fileName + "." , RGB(128, 128, 255));
+KTech::Texture& KTech::Texture::Rectangle(UPoint p_size, CellA p_value, Point p_pos)
+{
+	m_rPos = p_pos;
+	return Rectangle(p_size, p_value);
+}
+
+KTech::Texture& KTech::Texture::File(const std::string& p_fileName)
+{
+	m_simple = false;
 	// Open file
 	std::ifstream file(p_fileName);
 	if (!file.is_open())
 	{
-		Output::Log("<KTech::Texture::File()> Error! Failed to open file " + p_fileName + ".", RGB(255, 0, 0));
-		m_t.clear();
-		m_t.resize(2, std::vector<CellA>(2));
-		m_t[0][0].b = RGBA(255, 0, 220, 255);
-		m_t[1][1].b = RGBA(255, 0, 220, 255);
-		m_t[0][1].b = RGBA(0, 0, 0, 255);
-		m_t[1][0].b = RGBA(0, 0, 0, 255);
-		return GetSize();
+		// Failed to open file
+		Resize(UPoint(2, 2));
+		m_t[0] = CellA(' ', RGBAColors::transparent, RGBA(255, 0, 220, 255));
+		m_t[1] = CellA(' ', RGBAColors::transparent, RGBA(255, 0, 220, 255));
+		m_t[2] = CellA(' ', RGBAColors::transparent, RGBA(0, 0, 0, 255));
+		m_t[3] = CellA(' ', RGBAColors::transparent, RGBA(0, 0, 0, 255));
 	}
-
-	Output::Log("<KTech::Texture::File()> Reading size of texture.", RGB(128, 128, 255));
-	// Get the texture size (first 8 bytes of the file)
-	UPoint maxTextureSize;
-	file.read((char*)&maxTextureSize, 8);
-	Output::Log("<KTech::Texture::File()> Size of texture in file: { " + std::to_string(maxTextureSize.x) + ", " + std::to_string(maxTextureSize.y) + " }.", RGB(128, 128, 255));
-	if (maxTextureSize.y > 9999)
+	else
 	{
-		Output::Log("<KTech::Texture::File()> Warning! Y size of texture in file is too big. Scaling Y down to 9999.", RGB(255, 0, 0));
-		maxTextureSize.y = 9999;
+		// Get size
+		UPoint newSize;
+		file.read((char*)&newSize, 8);
+		// Apply size
+		Resize(newSize);
+		// Read from file
+		file.read((char*)m_t.data(), m_t.size() * 9);
 	}
-	if (maxTextureSize.x > 9999)
-	{
-		Output::Log("<KTech::Texture::File()> Warning! X size of texture in file is too big. Scaling X down to 9999.", RGB(255, 0, 0));
-		maxTextureSize.x = 9999;
-	}
-
-	Output::Log("<KTech::Texture::File()> Resizing texture to fit texture in file.", RGB(128, 128, 255));
-	// Resize the texture
-	m_t.clear();
-	m_t.resize(maxTextureSize.y, std::vector<CellA>(maxTextureSize.x));
-
-	Output::Log("<KTech::Texture::File()> Reading rest of file and writing to texture.", RGB(128, 128, 255));
-	// Read and write to the texture	
-	for (size_t y = 0; y < m_t.size(); y++)
-	{
-		for (size_t x = 0; x < m_t[y].size(); x++)
-		{
-			// Backwards compatability
-			char data[9];
-			file.read(data, 9);
-			m_t[y][x].f.r = data[0];
-			m_t[y][x].f.g = data[1];
-			m_t[y][x].f.b = data[2];
-			m_t[y][x].f.a = data[3];
-			m_t[y][x].b.r = data[4];
-			m_t[y][x].b.g = data[5];
-			m_t[y][x].b.b = data[6];
-			m_t[y][x].b.a = data[7];
-			m_t[y][x].c = data[8];
-			if (file.eof())
-			{
-				y = m_t.size();
-				break;
-			}
-		}
-	}
-
-	// Print old texture file
-	Output::Log("<KTech::Texture::File()> Printing texture:", RGB(128, 128, 255));
-	for (std::vector<CellA>& row : m_t)
-	{
-		for (CellA& cell : row)
-		{
-			std::cout << "\033[38;2;" << std::to_string(cell.f.r * cell.f.a / 255) << ';' << std::to_string(cell.f.g * cell.f.a / 255) << ';'<< std::to_string(cell.f.b * cell.f.a / 255) << 'm'
-				<< "\033[48;2;" << std::to_string(cell.b.r * cell.b.a / 255) << ';' << std::to_string(cell.b.g * cell.b.a / 255) << ';'<< std::to_string(cell.b.b * cell.b.a / 255) << 'm' << cell.c;
-		}
-		std::cout << "\033[m" << std::endl;
-	}
-	std::cout << std::flush;
-
-	Output::Log("<KTech::Texture::File()> Returning.", RGB(128, 128, 255));
-    return maxTextureSize;
+	return *this;
 }
 
-void KTech::Texture::Write(const std::vector<std::string>& p_stringVector, RGBA p_frgba, RGBA p_brgba, Point p_pos) {
-	m_simple = false;
-	m_rPos = p_pos;
-	m_t.resize(p_stringVector.size());
-	m_size = UPoint(0, 0);
-
-	for (size_t y = 0; y < p_stringVector.size(); y++)
-	{
-		m_t[y].resize(p_stringVector[y].length());
-		for (size_t x = 0; x < p_stringVector[y].length(); x++)
-			m_t[y][x] = CellA(p_stringVector[y][x], (p_stringVector[y][x] == ' ' ? RGBA(RGBAColors::transparent) : p_frgba) , p_brgba);
-	}	
-}
-
-KTech::UPoint KTech::Texture::GetSize() const
+KTech::Texture& KTech::Texture::File(const std::string& p_fileName, Point p_pos)
 {
-	// If the texture is simple, then `size` already represents the texture's size.
-	if (m_simple)
-		return m_size;
-	// Otherwise, go over the entire texture to get the maximum X size, and use that to tell the size.
-	UPoint size(0, m_t.size());
-	for (size_t y = 0; y < m_t.size(); y++)
-		if (m_t[y].size() > size.x)
-			size.x = m_t[y].size();
-	return size;
+	m_rPos = p_pos;
+	return File(p_fileName);
 }
 
-void KTech::Texture::Resize(UPoint p_newSize, CellA p_value)
+KTech::Texture& KTech::Texture::Write(const std::vector<std::string>& p_stringVector, RGBA p_frgba, RGBA p_brgba)
+{
+	m_simple = false;
+	// Get size
+	size_t maxX = 0;
+	for (const std::string& row : p_stringVector)
+		if (row.size() > maxX)
+			maxX = row.size();
+	// Apply size
+	Resize(UPoint(maxX, p_stringVector.size()));
+	// Read from strings
+	for (size_t y = 0; y < m_size.y; y++)
+		for (size_t x = 0; x < m_size.x; x++)
+			operator()(x, y) = (x < p_stringVector[y].size()) ? CellA(p_stringVector[y][x], p_stringVector[y][x] != ' ' ? p_frgba : RGBA(0, 0, 0, 0), p_stringVector[y][x] != ' ' ? p_brgba : RGBA(0, 0, 0, 0)) : CellA(' ', RGBA(0, 0, 0, 0), RGBA(0, 0, 0, 0));
+	return *this;
+}
+
+KTech::Texture& KTech::Texture::Write(const std::vector<std::string>& p_stringVector, RGBA p_frgba, RGBA p_brgba, Point p_pos)
+{
+	m_rPos = p_pos;
+	return Write(p_stringVector, p_frgba, p_brgba);
+}
+
+KTech::CellA& KTech::Texture::operator()(size_t x, size_t y)
+{
+	return m_t[m_size.x * y + x];
+}
+
+const KTech::CellA& KTech::Texture::operator()(size_t x, size_t y) const
+{
+	return m_t[m_size.x * y + x];
+}
+
+KTech::Texture& KTech::Texture::Resize(UPoint p_newSize, CellA p_value)
 {
 	if (m_simple)
 	{
@@ -162,73 +130,81 @@ void KTech::Texture::Resize(UPoint p_newSize, CellA p_value)
 	}
 	else
 	{
-		m_t.resize(p_newSize.y);
-		for (std::vector<CellA>& row : m_t)
-			row.resize(p_newSize.x, p_value);
+		// New vector
+		std::vector<CellA> newT(p_newSize.x * p_newSize.y);
+		// Copy
+		for (size_t x = 0; x < p_newSize.x; x++)
+			for (size_t y = 0; y < p_newSize.y; y++)
+				newT[p_newSize.x * y + x] = (x < m_size.x && y < m_size.y) ? m_t[m_size.x * y + x] : p_value;
+		// Update size
+		m_size = p_newSize;
+		// Set to new vector
+		m_t = newT;
 	}
+	return *this;
 }
 
-void KTech::Texture::SetCell(CellA p_value)
+KTech::Texture& KTech::Texture::SetCell(CellA p_value)
 {
 	if (m_simple)
 		m_value = p_value;
 	else
-		for (size_t y = 0; y < m_t.size(); y++)
-			for (size_t x = 0; x < m_t[y].size(); x++)
-				m_t[y][x] = p_value;
+		for (size_t i = 0; i < m_t.size(); i++)
+			m_t[i] = p_value;
+	return *this;
 }
 
-void KTech::Texture::SetForeground(RGBA p_value)
+KTech::Texture& KTech::Texture::SetForeground(RGBA p_value)
 {
 	if (m_simple)
 		m_value.f = p_value;
 	else
-		for (size_t y = 0; y < m_t.size(); y++)
-			for (size_t x = 0; x < m_t[y].size(); x++)
-				m_t[y][x].f = p_value;
+		for (size_t i = 0; i < m_t.size(); i++)
+			m_t[i].f = p_value;
+	return *this;
 }
 
-void KTech::Texture::SetBackground(RGBA p_value)
+KTech::Texture& KTech::Texture::SetBackground(RGBA p_value)
 {
 	if (m_simple)
 		m_value.b = p_value;
 	else
-		for (size_t y = 0; y < m_t.size(); y++)
-			for (size_t x = 0; x < m_t[y].size(); x++)
-				m_t[y][x].b = p_value;
+		for (size_t i = 0; i < m_t.size(); i++)
+			m_t[i].b = p_value;
+	return *this;
 }
 
-void KTech::Texture::SetCharacter(char p_value)
+KTech::Texture& KTech::Texture::SetCharacter(char p_value)
 {
 	if (m_simple)
 		m_value.c = p_value;
 	else
-		for (size_t y = 0; y < m_t.size(); y++)
-			for (size_t x = 0; x < m_t[y].size(); x++)
-				m_t[y][x].c = p_value;
+		for (size_t i = 0; i < m_t.size(); i++)
+			m_t[i].c = p_value;
+	return *this;
 }
 
-void KTech::Texture::SetForegroundAlpha(uint8_t p_value)
+KTech::Texture& KTech::Texture::SetForegroundAlpha(uint8_t p_value)
 {
 	if (m_simple)
 		m_value.f.a = p_value;
 	else
-		for (size_t y = 0; y < m_t.size(); y++)
-			for (size_t x = 0; x < m_t[y].size(); x++)
-				m_t[y][x].f.a = p_value;
+		for (size_t i = 0; i < m_t.size(); i++)
+			m_t[i].f.a = p_value;
+	return *this;
 }
 
-void KTech::Texture::SetBackgroundAlpha(uint8_t p_value)
+KTech::Texture& KTech::Texture::SetBackgroundAlpha(uint8_t p_value)
 {
 	if (m_simple)
 		m_value.b.a = p_value;
 	else
-		for (size_t y = 0; y < m_t.size(); y++)
-			for (size_t x = 0; x < m_t[y].size(); x++)
-				m_t[y][x].b.a = p_value;
+		for (size_t i = 0; i < m_t.size(); i++)
+			m_t[i].b.a = p_value;
+	return *this;
 }
 
-void KTech::Texture::SetAlpha(uint8_t p_value)
+KTech::Texture& KTech::Texture::SetAlpha(uint8_t p_value)
 {
 	if (m_simple)
 	{
@@ -237,49 +213,50 @@ void KTech::Texture::SetAlpha(uint8_t p_value)
 	}
 	else
 	{
-		for (size_t y = 0; y < m_t.size(); y++)
+		for (size_t i = 0; i < m_t.size(); i++)
 		{
-			for (size_t x = 0; x < m_t[y].size(); x++)
-			{
-				m_t[y][x].f.a = p_value;
-				m_t[y][x].b.a = p_value;
-			}
+			m_t[i].f.a = p_value;
+			m_t[i].b.a = p_value;
 		}
 	}
+	return *this;
+}
+
+KTech::Texture& KTech::Texture::ReplaceCharacter(char oldValue, char newValue)
+{
+	if (m_simple)
+	{
+		if (m_value.c == oldValue)
+			m_value.c = newValue;
+	}
+	else
+	{
+		for (size_t i = 0; i < m_t.size(); i++)
+			if (m_t[i].c == oldValue)
+				m_t[i].c = newValue;
+	}
+	return *this;
 }
 
 void KTech::Texture::ExportToFile(const std::string& p_fileName) const
 {
 	// Create/open file
 	std::ofstream file(p_fileName);
-	// Get the size of the texture
-	UPoint maxTextureSize(0, m_t.size());
-	for (size_t y = 0; y < m_t.size(); y++)
-		if (m_t[y].size() > maxTextureSize.x)
-			maxTextureSize.x = m_t[y].size();
-	// Write the size of the texture at the start of the file
-	file.write((char*)&maxTextureSize, 8);
-	// Write the texture itself
-	for (size_t y = 0; y < maxTextureSize.y; y++)
+	// Write size
+	file.write((char*)&m_size, 8);
+	// Write texture
+	file.write((char*)m_t.data(), m_t.size() * 9);
+}
+
+void KTech::Texture::Print()
+{
+	for (size_t i = 0; i < m_t.size();)
 	{
-		for (size_t x = 0; x < maxTextureSize.x; x++)
+		for (size_t x = 0; x < m_size.x; x++, i++)
 		{
-			if (x < m_t[y].size())
-			{
-				char data[9];
-				data[0] = m_t[y][x].f.r;
-				data[1] = m_t[y][x].f.g;
-				data[2] = m_t[y][x].f.b;
-				data[3] = m_t[y][x].f.a;
-				data[4] = m_t[y][x].b.r;
-				data[5] = m_t[y][x].b.g;
-				data[6] = m_t[y][x].b.b;
-				data[7] = m_t[y][x].b.a;
-				data[8] = m_t[y][x].c;
-				file.write(data, 9);
-			}
-			else
-				file.write("\0\0\0\0\0\0\0\0\0", 9);
+			std::cout << "\033[38;2;" << std::to_string(m_t[i].f.r * m_t[i].f.a / 255) << ';' << std::to_string(m_t[i].f.g * m_t[i].f.a / 255) << ';'<< std::to_string(m_t[i].f.b * m_t[i].f.a / 255) << 'm'
+				<< "\033[48;2;" << std::to_string(m_t[i].b.r * m_t[i].b.a / 255) << ';' << std::to_string(m_t[i].b.g * m_t[i].b.a / 255) << ';'<< std::to_string(m_t[i].b.b * m_t[i].b.a / 255) << 'm' << (' ' <= m_t[i].c && m_t[i].c <= '~' ? m_t[i].c : ' ');
 		}
+		std::cout << "\033[m" << std::endl;
 	}
 }

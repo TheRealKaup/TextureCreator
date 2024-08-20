@@ -28,7 +28,7 @@
 #include <string>
 #include <vector>
 
-struct KTech::Map
+class KTech::Map
 {
 public:
 	Engine& engine;
@@ -40,15 +40,20 @@ public:
 	size_t m_activeCameraI = -1;
 
 	Map(Engine& engine, const std::string& name = "");
-	~Map();
+	virtual ~Map();
 
-	inline virtual void OnTick() {};
-
-	int AddLayer(ID<Layer>& layer);
-	int AddCamera(ID<Camera>& camera, bool asActiveCamera = false);
+	bool AddLayer(ID<Layer>& layer);
+	bool AddCamera(ID<Camera>& camera, bool asActiveCamera = false);
 
 	bool RemoveLayer(ID<Layer>& layer);
 	bool RemoveCamera(ID<Camera>& camera);
+	bool RemoveAllLayers();
+	bool RemoveAllCameras();
 
 	bool Render();
+
+protected:
+	inline virtual bool OnTick() { return false; };
+
+	friend class KTech::Memory;
 };
