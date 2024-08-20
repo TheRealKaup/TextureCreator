@@ -91,16 +91,6 @@ struct TextureCreatorUI : KTech::UI
 
 	struct TopSection : KTech::Widget
 	{
-		enum WidgetIndex : uint8_t {
-			wi_exit,
-			wi_import,
-			wi_export,
-			wi_canvasSizeX,
-			wi_canvasSizeY,
-			wi_confirm,
-			WIDGETS_SIZE
-		};
-
 		TextureCreatorUI* const textureCreatorUI;
 
 		Button m_exit;
@@ -110,7 +100,7 @@ struct TextureCreatorUI : KTech::UI
 		IntField m_canvasSizeY;
 		Button m_confirmCanvasSize;
 
-		WidgetIndex m_curWidget = wi_exit;
+		size_t m_curWidget = 0;
 
 		TopSection(TextureCreatorUI* const textureCreatorUI, KTech::Engine& engine, KTech::ID<KTech::UI> parentUI, KTech::Point pos);
 
@@ -124,31 +114,6 @@ struct TextureCreatorUI : KTech::UI
 
 	struct SideSection : KTech::Widget
 	{		
-		enum WidgetIndex : uint8_t {
-			wi_foregroundR,
-			wi_foregroundG,
-			wi_foregroundB,
-			wi_foregroundA,
-			wi_backgroundR,
-			wi_backgroundG,
-			wi_backgroundB,
-			wi_backgroundA,
-			wi_character,
-			wi_brushSizeX,
-			wi_brushSizeY,
-			wi_toggleForeground,
-			wi_toggleBackground,
-			wi_toggleCharacter,
-			wi_canvasBackground,
-			WIDGETS_SIZE
-		};
-
-		enum TextureIndex : uint8_t {
-			ti_titleForeground,
-			ti_titleBackground,
-			TEXTURES_SIZE
-		};
-
 		TextureCreatorUI* const textureCreatorUI;
 
 		IntField m_foregroundR;
@@ -169,7 +134,7 @@ struct TextureCreatorUI : KTech::UI
 
 		Frame m_frame1, m_frame2, m_frame3;
 
-		WidgetIndex m_curWidget = wi_foregroundR;
+		size_t m_curWidget = 0;
 
 		SideSection(TextureCreatorUI* const textureCreatorUI, KTech::Engine& engine, KTech::ID<KTech::UI> parentUI, KTech::Point pos);
 

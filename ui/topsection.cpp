@@ -38,6 +38,8 @@ TextureCreatorUI::TopSection::TopSection(TextureCreatorUI* const p_textureCreato
 	AddWidget(m_canvasSizeX.m_id);
 	AddWidget(m_canvasSizeY.m_id);
 	AddWidget(m_confirmCanvasSize.m_id);
+	// Select default widget
+	engine.memory.widgets[m_childWidgets[m_curWidget].widget]->Select();
 	// Inputs
 	m_callbacksGroup->AddCallback(engine.input.RegisterCallback(KTech::Keys::right, std::bind(&TopSection::MoveRight, this)));
 	m_callbacksGroup->AddCallback(engine.input.RegisterCallback(KTech::Keys::left, std::bind(&TopSection::MoveLeft, this)));
@@ -46,10 +48,10 @@ TextureCreatorUI::TopSection::TopSection(TextureCreatorUI* const p_textureCreato
 bool TextureCreatorUI::TopSection::MoveRight()
 {
 	engine.memory.widgets[m_childWidgets[m_curWidget].widget]->Deselect();
-	if (m_curWidget == WIDGETS_SIZE - 1)
-		m_curWidget = (WidgetIndex)0;
+	if (m_curWidget == m_childWidgets.size() - 1)
+		m_curWidget = 0;
 	else
-		m_curWidget = (WidgetIndex)(m_curWidget + 1);
+		m_curWidget++;
 	engine.memory.widgets[m_childWidgets[m_curWidget].widget]->Select();
 	return true;
 }
@@ -58,9 +60,9 @@ bool TextureCreatorUI::TopSection::MoveLeft()
 {
 	engine.memory.widgets[m_childWidgets[m_curWidget].widget]->Deselect();
 	if (m_curWidget == 0)
-		m_curWidget = (WidgetIndex)(WIDGETS_SIZE - 1);
+		m_curWidget = m_childWidgets.size() - 1;
 	else
-		m_curWidget = (WidgetIndex)(m_curWidget - 1);
+		m_curWidget--;
 	engine.memory.widgets[m_childWidgets[m_curWidget].widget]->Select();
 	return true;
 }
