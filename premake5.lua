@@ -1,4 +1,4 @@
-workspace "KTech"
+workspace "TextureCreator"
 	configurations { "Debug", "Release" }
 	location "build"
 	cppdialect "C++17"
