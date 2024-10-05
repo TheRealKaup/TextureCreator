@@ -1,6 +1,7 @@
 workspace "KTech"
 	configurations { "Debug", "Release" }
 	location "build"
+	cppdialect "C++17"
 
 include "ktech"
 
