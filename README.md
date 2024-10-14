@@ -20,6 +20,8 @@ To generate build files, ensure Premake is installed on your system and run the 
 
 To then generate binary files with GNU Make, run the command `make -C build/`, and they will be outputted to the directory `build/bin/`.
 
+You can learn more about using KTech and Premake in [KTech's FAQ](https://github.com/TheRealKaup/KTech/blob/master/documentation/faq.md#how-to-build-ktech-with-premake).
+
 ## Manual
 
 ### Command line arguments
