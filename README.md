@@ -1,6 +1,24 @@
 # _TextureCreator_, a Tool for Creating [KTech](https://github.com/TheRealKaup/KTech) Textures
 
+- [Introduction](#introduction)
+- [Building](#building)
+- [Manual](#manual)
+
+![gplv3-or-later](https://www.gnu.org/graphics/gplv3-or-later.png)
+
+## Introduction
+
+An application made with [KTech](https://github.com/TheRealKaup/KTech) for creating cell-based `KTech::Texture` files. This program is required because each terminal character cell has an RGB foreground color, an RGB background color and a character; this kind of image can't be created with a normal pixel-based image creator.
+
 ![TextureCreator Screenshot](https://github.com/TheRealKaup/TheRealKaup/blob/main/texturecreatorscreenshot.png)
+
+## Building
+
+TextureCreator (and KTech) uses **[Premake](https://premake.github.io/)** to configure and generate build files.
+
+To generate build files, ensure Premake is installed on your system and run the command `premake5 [action]` (see [relevant documentation](https://premake.github.io/docs/Using-Premake)) from the Git repository's root, which is where the `premake5.lua` script is located (e.g. `premake5 gmake2` to generate GNU Makefiles).
+
+To then generate binary files with GNU Make, run the command `make -C build/`, and they will be outputted to the directory `build/bin/`.
 
 ## Manual
 
