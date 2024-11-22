@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "ktech/ktech.hpp"
+#include "ktech/ktech/ktech.hpp"
 
 #include "ui/ui.hpp"
 

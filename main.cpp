@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
 			}
 		}
 	}
-	
+
 	TextureCreator textureCreator;
 
 	if (argc == 2) // Import file
@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
 
 	while (textureCreator.engine.running)
 	{
-		textureCreator.engine.input.CallHandlers();
+		textureCreator.engine.input.CallCallbacks();
 		textureCreator.engine.time.CallInvocations();
 		textureCreator.engine.memory.CallOnTicks();
 

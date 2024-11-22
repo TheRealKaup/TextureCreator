@@ -1,0 +1,3 @@
+[submodule "ktech"]
+	path = ktech
+	url = https://github.com/TheRealKaup/KTech

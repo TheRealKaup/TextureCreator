@@ -3,3 +3,9 @@ build/
 .vs/
 
 premake5.exe
+
+import.ktecht
+
+export.ktecht
+
+oldfiles/

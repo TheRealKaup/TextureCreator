@@ -3,7 +3,7 @@ workspace "TextureCreator"
 	location "build"
 	cppdialect "C++17"
 
-include "ktech"
+include "ktech/ktech/"
 
 project "texturecreator"
 	kind "ConsoleApp"

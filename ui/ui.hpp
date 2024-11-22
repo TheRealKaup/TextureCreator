@@ -20,13 +20,12 @@
 
 #pragma once
 
-#include "../ktech/ktech.hpp"
-#include "../ktech/widgets/button.hpp"
-#include "../ktech/widgets/intfield.hpp"
-#include "../ktech/widgets/stringfield.hpp"
-#include "../ktech/widgets/switch.hpp"
-
-#include "../ktech/widgets/frame.hpp"
+#include "../ktech/ktech/ktech.hpp"
+#include "../ktech/ktech/widgets/button.hpp"
+#include "../ktech/ktech/widgets/intfield.hpp"
+#include "../ktech/ktech/widgets/stringfield.hpp"
+#include "../ktech/ktech/widgets/switch.hpp"
+#include "../ktech/ktech/widgets/frame.hpp"
 
 struct TextureCreatorUI : KTech::UI
 {
@@ -113,7 +112,7 @@ struct TextureCreatorUI : KTech::UI
 	};
 
 	struct SideSection : KTech::Widget
-	{		
+	{
 		TextureCreatorUI* const textureCreatorUI;
 
 		IntField m_foregroundR;
